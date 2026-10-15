@@ -9,6 +9,10 @@ public interface ProductService {
 
     Product create(Product product);
 
+    Product update(Long id, Product product);
+
+    Product setAvailability(Long id, boolean available);
+
 
     List<Product> getAllProducts();
 

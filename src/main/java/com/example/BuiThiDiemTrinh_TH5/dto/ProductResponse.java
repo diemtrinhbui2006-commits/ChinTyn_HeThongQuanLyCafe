@@ -5,6 +5,7 @@ public record ProductResponse(
         String description,
         Double price,
         Integer quantity,
-        Long categoryId
+        Long categoryId,
+        boolean available
 ) {
 }

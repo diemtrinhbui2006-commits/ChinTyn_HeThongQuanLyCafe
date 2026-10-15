@@ -21,6 +21,7 @@ He thong quan ly quan cafe gom cac nghiep vu cot loi sau:
    - Du lieu hoa don da thanh toan la nguon de in hoa don.
 5. **Quan ly du lieu danh muc**
    - CRUD nhan vien, tai khoan, danh muc mon, mon va ban.
+   - Cap nhat thong tin mon va gia; mon co the ngung ban/tiep tuc ban ma khong bi xoa khoi du lieu.
    - CRUD hoa don va chi tiet hoa don trong giai doan goi mon.
 
 ## 2. Quy tac nghiep vu chinh
@@ -71,6 +72,7 @@ erDiagram
         varchar name
         decimal price
         int quantity
+        boolean available
         varchar description
     }
     CAFE_TABLES {

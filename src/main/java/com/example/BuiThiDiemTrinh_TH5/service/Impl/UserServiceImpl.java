@@ -10,9 +10,11 @@ import javax.crypto.spec.PBEKeySpec;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.BuiThiDiemTrinh_TH5.entity.Employee;
 import com.example.BuiThiDiemTrinh_TH5.entity.User;
 import com.example.BuiThiDiemTrinh_TH5.exception.BadRequestException;
 import com.example.BuiThiDiemTrinh_TH5.exception.ResourceNotFoundException;
+import com.example.BuiThiDiemTrinh_TH5.repository.EmployeeRepository;
 import com.example.BuiThiDiemTrinh_TH5.repository.UserRepository;
 import com.example.BuiThiDiemTrinh_TH5.service.UserService;
 
@@ -24,16 +26,19 @@ public class UserServiceImpl implements UserService {
     private static final int KEY_LENGTH = 256;
 
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, EmployeeRepository employeeRepository) {
         this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     @Override
     public User create(User user) {
         validate(user);
         user.setId(null);
+        user.setEmployee(resolveEmployee(user.getEmployee()));
         user.setPassword(hashPassword(user.getPassword()));
         return userRepository.save(user);
     }
@@ -57,6 +62,9 @@ public class UserServiceImpl implements UserService {
         existing.setUsername(user.getUsername());
         existing.setRole(user.getRole());
         existing.setPassword(hashPassword(user.getPassword()));
+        if (user.getEmployee() != null) {
+            existing.setEmployee(resolveEmployee(user.getEmployee()));
+        }
         return userRepository.save(existing);
     }
 
@@ -93,5 +101,18 @@ public class UserServiceImpl implements UserService {
         } finally {
             spec.clearPassword();
         }
+    }
+
+    private Employee resolveEmployee(Employee employee) {
+        if (employee == null) {
+            return null;
+        }
+        if (employee.getId() == null) {
+            throw new BadRequestException("Mã nhân viên không hợp lệ");
+        }
+        return employeeRepository.findById(employee.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Không tìm thấy nhân viên có id = " + employee.getId()
+                ));
     }
 }

@@ -39,15 +39,29 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public Product create(Product product) {
         validateProduct(product);
-        Long categoryId = product.getCategory().getId();
-        if (!categoryRepository.existsById(categoryId)) {
-            throw new ResourceNotFoundException(
-                    "Không tìm thấy danh mục có id = " + categoryId
-            );
-        }
-
-        product.setCategory(entityManager.getReference(Category.class, categoryId));
+        product.setCategory(getCategoryReference(product));
         product.setId(null);
+        return productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public Product update(Long id, Product product) {
+        validateProduct(product);
+        Product existing = getProductById(id);
+        existing.setName(product.getName().trim());
+        existing.setDescription(product.getDescription());
+        existing.setPrice(product.getPrice());
+        existing.setQuantity(product.getQuantity());
+        existing.setCategory(getCategoryReference(product));
+        return productRepository.save(existing);
+    }
+
+    @Override
+    @Transactional
+    public Product setAvailability(Long id, boolean available) {
+        Product product = getProductById(id);
+        product.setAvailable(available);
         return productRepository.save(product);
     }
 
@@ -76,14 +90,28 @@ public class ProductServiceImpl implements ProductService {
         if (product == null || product.getName() == null || product.getName().isBlank()) {
             throw new BadRequestException("Tên sản phẩm không được để trống");
         }
-        if (product.getPrice() == null || product.getPrice() <= 0) {
+        if (product.getName().length() > 100) {
+            throw new BadRequestException("Tên sản phẩm không được vượt quá 100 ký tự");
+        }
+        if (product.getPrice() == null || !Double.isFinite(product.getPrice()) || product.getPrice() <= 0) {
             throw new BadRequestException("Giá sản phẩm không hợp lệ");
         }
         if (product.getQuantity() == null || product.getQuantity() < 0) {
             throw new BadRequestException("Số lượng sản phẩm không hợp lệ");
         }
+        if (product.getDescription() != null && product.getDescription().length() > 500) {
+            throw new BadRequestException("Mô tả sản phẩm không được vượt quá 500 ký tự");
+        }
         if (product.getCategory() == null || product.getCategory().getId() == null) {
             throw new BadRequestException("Danh mục sản phẩm không được để trống");
         }
+    }
+
+    private Category getCategoryReference(Product product) {
+        Long categoryId = product.getCategory().getId();
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new ResourceNotFoundException("Không tìm thấy danh mục có id = " + categoryId);
+        }
+        return entityManager.getReference(Category.class, categoryId);
     }
 }

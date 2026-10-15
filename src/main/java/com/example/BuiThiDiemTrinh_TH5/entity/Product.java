@@ -44,6 +44,9 @@ public class Product {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(nullable = false)
+    private boolean available = true;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     @ToString.Exclude

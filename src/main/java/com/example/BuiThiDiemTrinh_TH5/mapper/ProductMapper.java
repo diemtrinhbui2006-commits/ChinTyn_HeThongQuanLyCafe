@@ -26,6 +26,7 @@ public class ProductMapper {
                 request.description(),
                 request.price(),
                 request.quantity(),
+                true,
                 category
         );
     }
@@ -37,7 +38,8 @@ public class ProductMapper {
                 product.getDescription(),
                 product.getPrice(),
                 product.getQuantity(),
-                product.getCategory() == null ? null : product.getCategory().getId()
+                product.getCategory() == null ? null : product.getCategory().getId(),
+                product.isAvailable()
         );
     }
 }
