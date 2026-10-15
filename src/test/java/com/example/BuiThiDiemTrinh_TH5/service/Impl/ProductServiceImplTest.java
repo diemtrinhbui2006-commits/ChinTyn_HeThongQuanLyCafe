@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -50,13 +51,13 @@ class ProductServiceImplTest {
         when(productRepository.save(existing)).thenReturn(existing);
 
         Product updated = productService.update(7L, new Product(
-                null, "Latte", "Ca phe sua", 45000.0, 10, true, category
+                null, "Latte", "Ca phe sua", new BigDecimal("45000.00"), 10, true, category
         ));
 
         assertSame(existing, updated);
         assertEquals(7L, updated.getId());
         assertEquals("Latte", updated.getName());
-        assertEquals(45000.0, updated.getPrice());
+        assertEquals(new BigDecimal("45000.00"), updated.getPrice());
         assertSame(category, updated.getCategory());
         verify(productRepository).save(existing);
     }
@@ -78,7 +79,7 @@ class ProductServiceImplTest {
     void updateRejectsNonPositivePrice() {
         Product invalid = new Product();
         invalid.setName("Latte");
-        invalid.setPrice(0.0);
+        invalid.setPrice(BigDecimal.ZERO);
 
         assertThrows(BadRequestException.class, () -> productService.update(7L, invalid));
     }

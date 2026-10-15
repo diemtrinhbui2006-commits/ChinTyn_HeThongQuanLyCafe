@@ -1,5 +1,6 @@
 package com.example.BuiThiDiemTrinh_TH5.service.Impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -93,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
         if (product.getName().length() > 100) {
             throw new BadRequestException("Tên sản phẩm không được vượt quá 100 ký tự");
         }
-        if (product.getPrice() == null || !Double.isFinite(product.getPrice()) || product.getPrice() <= 0) {
+        if (product.getPrice() == null || product.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Giá sản phẩm không hợp lệ");
         }
         if (product.getQuantity() == null || product.getQuantity() < 0) {

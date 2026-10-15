@@ -1,5 +1,7 @@
 package com.example.BuiThiDiemTrinh_TH5.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -37,8 +39,8 @@ public class Product {
     private String description;
 
 
-    @Column(nullable = false)
-    private Double price;
+    @Column(nullable = false, precision = 14, scale = 2)
+    private BigDecimal price;
 
 
     @Column(nullable = false)

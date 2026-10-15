@@ -1,9 +1,12 @@
 package com.example.BuiThiDiemTrinh_TH5.dto;
+
+import java.math.BigDecimal;
+
 public record ProductResponse(
         Long id,
         String name,
         String description,
-        Double price,
+        BigDecimal price,
         Integer quantity,
         Long categoryId,
         boolean available
