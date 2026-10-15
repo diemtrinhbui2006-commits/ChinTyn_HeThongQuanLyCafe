@@ -1,5 +1,7 @@
 package com.example.BuiThiDiemTrinh_TH5.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -33,6 +35,6 @@ public class Employee {
     @Column(nullable = false, length = 100)
     private String position;
 
-    @Column(nullable = false)
-    private Double salary;
+    @Column(nullable = false, precision = 14, scale = 2)
+    private BigDecimal salary;
 }

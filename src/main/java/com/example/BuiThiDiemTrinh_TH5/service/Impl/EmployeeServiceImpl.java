@@ -63,7 +63,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (employee.getPosition() == null || employee.getPosition().isBlank()) {
             throw new BadRequestException("Chức vụ nhân viên không được để trống");
         }
-        if (employee.getSalary() == null || !Double.isFinite(employee.getSalary()) || employee.getSalary() < 0) {
+        if (employee.getSalary() == null || employee.getSalary().signum() < 0) {
             throw new BadRequestException("Lương nhân viên không hợp lệ");
         }
     }
