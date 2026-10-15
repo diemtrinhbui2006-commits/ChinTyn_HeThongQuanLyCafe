@@ -57,6 +57,14 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findAll();
     }
 
+    @Override
+    public List<Product> searchProductsByName(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new BadRequestException("Từ khóa tìm kiếm không được để trống");
+        }
+        return productRepository.findByNameContainingIgnoreCase(keyword.trim());
+    }
+
 
     @Override
     public Product getProductById(Long id) {
@@ -68,7 +76,7 @@ public class ProductServiceImpl implements ProductService {
         if (product == null || product.getName() == null || product.getName().isBlank()) {
             throw new BadRequestException("Tên sản phẩm không được để trống");
         }
-        if (product.getPrice() == null || product.getPrice() < 0) {
+        if (product.getPrice() == null || product.getPrice() <= 0) {
             throw new BadRequestException("Giá sản phẩm không hợp lệ");
         }
         if (product.getQuantity() == null || product.getQuantity() < 0) {
