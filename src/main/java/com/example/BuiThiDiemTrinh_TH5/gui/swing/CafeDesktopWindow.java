@@ -272,35 +272,15 @@ public class CafeDesktopWindow {
         titles.add(title, constraints(1, 0));
         GridBagConstraints subtitleConstraints = constraints(0, 1);
         subtitleConstraints.gridx = 1;
-        subtitleConstraints.insets = new Insets(3, 2, 0, 0);
+        subtitleConstraints.insets = new Insets(4, 2, 0, 0);
         titles.add(subtitle, subtitleConstraints);
 
-        // Khu vực giữa: Đồng hồ hệ thống & Thống kê tình trạng bàn
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setOpaque(false);
-
-        clockLabel = new JLabel(LocalDateTime.now().format(CLOCK_FORMATTER));
-        clockLabel.setForeground(new Color(245, 235, 225));
-        clockLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-        clockLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
-
-        tableStatsLabel = new JLabel("Đang tải dữ liệu bàn...");
-        tableStatsLabel.setForeground(new Color(225, 210, 195));
-        tableStatsLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
-        tableStatsLabel.setAlignmentX(JComponent.CENTER_ALIGNMENT);
-
-        centerPanel.add(clockLabel);
-        centerPanel.add(Box.createVerticalStrut(4));
-        centerPanel.add(tableStatsLabel);
-
-        // Khu vực phải: Nút Làm mới
-        refreshButton = new JButton("🔄 Làm mới (F5)");
+        // Khu vực phải: Nút Làm mới dữ liệu độc lập, thoáng đãng, không bị đè chữ
+        refreshButton = new JButton("🔄 Làm mới dữ liệu (F5)");
         secondaryButton(refreshButton);
         refreshButton.addActionListener(event -> refreshReferenceDataInBackground(selectedTableId()));
 
         header.add(titles, BorderLayout.WEST);
-        header.add(centerPanel, BorderLayout.CENTER);
         header.add(refreshButton, BorderLayout.EAST);
         return header;
     }
@@ -756,7 +736,7 @@ public class CafeDesktopWindow {
     }
 
     private JPanel createFooter() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(16, 0));
         panel.setBackground(CREAM);
         panel.setBorder(BorderFactory.createEmptyBorder(6, 26, 12, 26));
 
@@ -764,12 +744,19 @@ public class CafeDesktopWindow {
         footerStatus.setForeground(MUTED);
         footerStatus.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
 
-        JLabel teamLabel = new JLabel("ChinTyn Cafe · Trinh (Giao diện) & Tuyền (Backend Integration)");
-        teamLabel.setForeground(MUTED);
-        teamLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
+        tableStatsLabel = new JLabel("Đang tải dữ liệu bàn...");
+        tableStatsLabel.setForeground(COFFEE);
+        tableStatsLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        tableStatsLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        clockLabel = new JLabel(LocalDateTime.now().format(CLOCK_FORMATTER));
+        clockLabel.setForeground(MUTED);
+        clockLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        clockLabel.setHorizontalAlignment(JLabel.RIGHT);
 
         panel.add(footerStatus, BorderLayout.WEST);
-        panel.add(teamLabel, BorderLayout.EAST);
+        panel.add(tableStatsLabel, BorderLayout.CENTER);
+        panel.add(clockLabel, BorderLayout.EAST);
         return panel;
     }
 
@@ -932,7 +919,7 @@ public class CafeDesktopWindow {
                 } finally {
                     refreshInProgress = false;
                     refreshButton.setEnabled(true);
-                    refreshButton.setText("🔄 Làm mới (F5)");
+                    refreshButton.setText("🔄 Làm mới dữ liệu (F5)");
                 }
             }
         }.execute();
@@ -1245,7 +1232,7 @@ public class CafeDesktopWindow {
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(225, 205, 185)),
-                BorderFactory.createEmptyBorder(8, 13, 8, 13)
+                BorderFactory.createEmptyBorder(9, 16, 9, 16)
         ));
     }
 
