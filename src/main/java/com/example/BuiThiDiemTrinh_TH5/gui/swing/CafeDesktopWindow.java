@@ -1,5 +1,6 @@
 package com.example.BuiThiDiemTrinh_TH5.gui.swing;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -14,6 +15,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.geom.Arc2D;
+import java.awt.geom.GeneralPath;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -246,15 +249,8 @@ public class CafeDesktopWindow {
         header.setLayout(new BorderLayout(16, 0));
         header.setBorder(BorderFactory.createEmptyBorder(16, 26, 16, 26));
 
-        // Logo và Tên thương hiệu
-        JLabel brandMark = new JLabel("C");
-        brandMark.setHorizontalAlignment(JLabel.CENTER);
-        brandMark.setOpaque(true);
-        brandMark.setBackground(CARAMEL);
-        brandMark.setForeground(Color.WHITE);
-        brandMark.setFont(new Font(Font.SERIF, Font.BOLD, 26));
-        brandMark.setPreferredSize(new Dimension(50, 50));
-        brandMark.setBorder(BorderFactory.createLineBorder(new Color(235, 196, 150), 2, true));
+        // Logo Cốc Cà Phê nghệ thuật
+        JComponent brandMark = createCoffeeCupLogo();
 
         JLabel title = new JLabel("CHINTYN CAFE");
         title.setForeground(Color.WHITE);
@@ -1221,6 +1217,79 @@ public class CafeDesktopWindow {
                 BorderFactory.createEmptyBorder(9, 14, 9, 14)
         ));
         return button;
+    }
+
+    private JComponent createCoffeeCupLogo() {
+        return new JComponent() {
+            {
+                setPreferredSize(new Dimension(50, 50));
+                setMinimumSize(new Dimension(50, 50));
+                setMaximumSize(new Dimension(50, 50));
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
+                int size = Math.min(getWidth(), getHeight());
+                int x = (getWidth() - size) / 2;
+                int y = (getHeight() - size) / 2;
+
+                // Nền tròn màu Caramel sang trọng
+                g2.setColor(CARAMEL);
+                g2.fillOval(x + 2, y + 2, size - 4, size - 4);
+
+                // Viền vàng kem bo tròn nổi bật
+                g2.setColor(new Color(245, 215, 185));
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawOval(x + 2, y + 2, size - 4, size - 4);
+
+                // 1. Đĩa lót dưới đáy cốc
+                g2.setColor(new Color(255, 255, 255, 220));
+                g2.fillRoundRect(x + 13, y + 36, 24, 4, 3, 3);
+
+                // 2. Thân cốc cà phê
+                g2.setColor(Color.WHITE);
+                GeneralPath cup = new GeneralPath();
+                cup.moveTo(x + 15, y + 20);
+                cup.lineTo(x + 33, y + 20);
+                cup.curveTo(x + 33, y + 27, x + 31, y + 34, x + 28, y + 34);
+                cup.lineTo(x + 20, y + 34);
+                cup.curveTo(x + 17, y + 34, x + 15, y + 27, x + 15, y + 20);
+                cup.closePath();
+                g2.fill(cup);
+
+                // 3. Quai cốc bên phải
+                g2.setColor(Color.WHITE);
+                g2.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                Arc2D handle = new Arc2D.Float(x + 27, y + 21, 10, 10, 270, 180, Arc2D.OPEN);
+                g2.draw(handle);
+
+                // 4. Lớp cà phê bên trong miệng cốc
+                g2.setColor(new Color(80, 45, 25));
+                g2.fillOval(x + 16, y + 19, 16, 4);
+
+                // 5. Hai làn khói hương cà phê bốc lên mềm mại
+                g2.setColor(new Color(255, 255, 255, 210));
+                g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+                // Làn khói 1
+                GeneralPath smoke1 = new GeneralPath();
+                smoke1.moveTo(x + 20, y + 16);
+                smoke1.curveTo(x + 18, y + 13, x + 22, y + 11, x + 20, y + 8);
+                g2.draw(smoke1);
+
+                // Làn khói 2
+                GeneralPath smoke2 = new GeneralPath();
+                smoke2.moveTo(x + 26, y + 16);
+                smoke2.curveTo(x + 24, y + 13, x + 28, y + 11, x + 26, y + 8);
+                g2.draw(smoke2);
+
+                g2.dispose();
+            }
+        };
     }
 
     private JButton createHeaderRefreshButton() {
