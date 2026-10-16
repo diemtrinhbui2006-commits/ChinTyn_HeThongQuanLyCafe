@@ -5,20 +5,25 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,9 +37,11 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -64,7 +71,12 @@ public class CafeDesktopWindow {
 
     private static final Logger LOGGER = Logger.getLogger(CafeDesktopWindow.class.getName());
     private static final Color COFFEE = new Color(91, 58, 41);
+    private static final Color ESPRESSO = new Color(54, 37, 30);
+    private static final Color CARAMEL = new Color(190, 132, 76);
     private static final Color CREAM = new Color(250, 247, 241);
+    private static final Color SOFT_CREAM = new Color(246, 241, 233);
+    private static final Color BORDER = new Color(231, 224, 215);
+    private static final Color SELECTED = new Color(250, 241, 228);
     private static final Color MUTED = new Color(105, 105, 105);
     private static final NumberFormat CURRENCY = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("vi-VN"));
 
@@ -83,6 +95,7 @@ public class CafeDesktopWindow {
     };
 
     private JFrame frame;
+    private JButton refreshButton;
     private JComboBox<CafeTable> tableSelector;
     private JComboBox<Employee> employeeSelector;
     private JComboBox<String> paymentSelector;
@@ -99,6 +112,7 @@ public class CafeDesktopWindow {
     private List<Product> products = List.of();
     private InvoiceResponse currentInvoice;
     private boolean updatingTableSelector;
+    private boolean refreshInProgress;
 
     public CafeDesktopWindow(
             CafeTableRepository tableRepository,
@@ -126,10 +140,10 @@ public class CafeDesktopWindow {
         frame = new JFrame("ChinTyn Cafe | Quản lý gọi món");
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setMinimumSize(new Dimension(1000, 650));
-        frame.setSize(1180, 760);
+        frame.setSize(1280, 820);
         frame.setLocationRelativeTo(null);
         frame.getContentPane().setBackground(CREAM);
-        frame.setLayout(new BorderLayout(16, 16));
+        frame.setLayout(new BorderLayout(0, 0));
         frame.add(createHeader(), BorderLayout.NORTH);
         frame.add(createWorkspace(), BorderLayout.CENTER);
         frame.add(createFooter(), BorderLayout.SOUTH);
@@ -144,26 +158,41 @@ public class CafeDesktopWindow {
     }
 
     private JPanel createHeader() {
-        JPanel header = new JPanel(new BorderLayout(12, 0));
-        header.setBackground(COFFEE);
-        header.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        JPanel header = new GradientHeader();
+        header.setLayout(new BorderLayout(16, 0));
+        header.setBorder(BorderFactory.createEmptyBorder(22, 30, 22, 30));
+
+        JLabel brandMark = new JLabel("C");
+        brandMark.setHorizontalAlignment(JLabel.CENTER);
+        brandMark.setOpaque(true);
+        brandMark.setBackground(CARAMEL);
+        brandMark.setForeground(Color.WHITE);
+        brandMark.setFont(new Font(Font.SERIF, Font.BOLD, 24));
+        brandMark.setPreferredSize(new Dimension(48, 48));
+        brandMark.setBorder(BorderFactory.createLineBorder(new Color(225, 184, 135)));
 
         JLabel title = new JLabel("CHINTYN CAFE");
         title.setForeground(Color.WHITE);
-        title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 22));
-        JLabel subtitle = new JLabel("Gọi món và thanh toán");
-        subtitle.setForeground(new Color(235, 220, 202));
-        subtitle.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        title.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 23));
+        JLabel subtitle = new JLabel("QUẢN LÝ GỌI MÓN  ·  THANH TOÁN");
+        subtitle.setForeground(new Color(225, 211, 195));
+        subtitle.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
 
         JPanel titles = new JPanel(new GridBagLayout());
         titles.setOpaque(false);
-        titles.add(title, constraints(0, 0));
+        GridBagConstraints brandConstraints = constraints(0, 0);
+        brandConstraints.gridheight = 2;
+        brandConstraints.insets = new Insets(0, 0, 0, 14);
+        titles.add(brandMark, brandConstraints);
+        titles.add(title, constraints(1, 0));
         GridBagConstraints subtitleConstraints = constraints(0, 1);
-        subtitleConstraints.insets = new Insets(3, 0, 0, 0);
+        subtitleConstraints.gridx = 1;
+        subtitleConstraints.insets = new Insets(4, 2, 0, 0);
         titles.add(subtitle, subtitleConstraints);
 
-        JButton refreshButton = new JButton("Làm mới dữ liệu");
-        refreshButton.addActionListener(event -> runAction(() -> refreshReferenceData(selectedTableId())));
+        refreshButton = new JButton("Làm mới dữ liệu");
+        secondaryButton(refreshButton);
+        refreshButton.addActionListener(event -> refreshReferenceDataInBackground(selectedTableId()));
         header.add(titles, BorderLayout.WEST);
         header.add(refreshButton, BorderLayout.EAST);
         return header;
@@ -172,7 +201,7 @@ public class CafeDesktopWindow {
     private JPanel createWorkspace() {
         JPanel workspace = new JPanel(new GridBagLayout());
         workspace.setBackground(CREAM);
-        workspace.setBorder(BorderFactory.createEmptyBorder(0, 16, 0, 16));
+        workspace.setBorder(BorderFactory.createEmptyBorder(22, 24, 10, 24));
 
         GridBagConstraints menuConstraints = constraints(0, 0);
         menuConstraints.weightx = 0.46;
@@ -196,6 +225,7 @@ public class CafeDesktopWindow {
 
         productSearch = new JTextField();
         productSearch.setToolTipText("Nhập tên món để tìm");
+        styleInput(productSearch);
         productSearch.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent event) {
@@ -222,10 +252,14 @@ public class CafeDesktopWindow {
         productList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         productList.setCellRenderer(new ProductCellRenderer());
         productList.setBackground(Color.WHITE);
+        productList.setFixedCellHeight(68);
+        productList.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         JPanel addPanel = new JPanel(new GridBagLayout());
         addPanel.setOpaque(false);
+        addPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER));
         quantitySpinner = new JSpinner(new SpinnerNumberModel(1, 1, 999, 1));
+        styleInput(quantitySpinner);
         JButton addButton = primaryButton("Thêm món vào bàn");
         addButton.addActionListener(event -> runAction(this::addSelectedProduct));
         GridBagConstraints quantityLabelConstraints = constraints(0, 0);
@@ -238,7 +272,7 @@ public class CafeDesktopWindow {
         addPanel.add(addButton, constraints(2, 0));
 
         panel.add(searchPanel, BorderLayout.NORTH);
-        panel.add(new JScrollPane(productList), BorderLayout.CENTER);
+        panel.add(styledScrollPane(productList), BorderLayout.CENTER);
         panel.add(addPanel, BorderLayout.SOUTH);
         return panel;
     }
@@ -254,6 +288,7 @@ public class CafeDesktopWindow {
         orderHeader.add(new JLabel("Bàn"), tableLabelConstraints);
         tableSelector = new JComboBox<>();
         tableSelector.setRenderer(new TableCellRenderer());
+        styleInput(tableSelector);
         tableSelector.addActionListener(event -> {
             if (!updatingTableSelector) {
                 loadSelectedTableInvoice();
@@ -271,14 +306,21 @@ public class CafeDesktopWindow {
         orderHeader.add(new JLabel("Nhân viên"), employeeLabelConstraints);
         employeeSelector = new JComboBox<>();
         employeeSelector.setRenderer(new EmployeeCellRenderer());
+        styleInput(employeeSelector);
         GridBagConstraints employeeSelectorConstraints = constraints(1, 1);
         employeeSelectorConstraints.fill = GridBagConstraints.HORIZONTAL;
         employeeSelectorConstraints.insets = new Insets(10, 8, 0, 0);
         orderHeader.add(employeeSelector, employeeSelectorConstraints);
 
         invoiceStatus = new JLabel("Chọn bàn để xem hóa đơn");
-        invoiceStatus.setForeground(MUTED);
-        invoiceStatus.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+        invoiceStatus.setForeground(COFFEE);
+        invoiceStatus.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        invoiceStatus.setOpaque(true);
+        invoiceStatus.setBackground(SOFT_CREAM);
+        invoiceStatus.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER),
+                BorderFactory.createEmptyBorder(8, 11, 8, 11)
+        ));
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setOpaque(false);
         titlePanel.add(sectionTitle("Hóa đơn hiện tại"), BorderLayout.NORTH);
@@ -286,12 +328,23 @@ public class CafeDesktopWindow {
         titlePanel.add(invoiceStatus, BorderLayout.SOUTH);
 
         invoiceTable = new JTable(invoiceTableModel);
-        invoiceTable.setRowHeight(30);
+        invoiceTable.setRowHeight(38);
         invoiceTable.setFillsViewportHeight(true);
+        invoiceTable.setShowGrid(false);
+        invoiceTable.setIntercellSpacing(new Dimension(0, 0));
+        invoiceTable.setSelectionBackground(SELECTED);
+        invoiceTable.setSelectionForeground(ESPRESSO);
+        invoiceTable.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        invoiceTable.setForeground(ESPRESSO);
         invoiceTable.getTableHeader().setReorderingAllowed(false);
+        invoiceTable.getTableHeader().setPreferredSize(new Dimension(0, 38));
+        invoiceTable.getTableHeader().setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
+        invoiceTable.getTableHeader().setBackground(SOFT_CREAM);
+        invoiceTable.getTableHeader().setForeground(MUTED);
+        invoiceTable.setDefaultRenderer(Object.class, new InvoiceCellRenderer());
 
         panel.add(titlePanel, BorderLayout.NORTH);
-        panel.add(new JScrollPane(invoiceTable), BorderLayout.CENTER);
+        panel.add(styledScrollPane(invoiceTable), BorderLayout.CENTER);
         panel.add(createTotalsPanel(), BorderLayout.SOUTH);
         return panel;
     }
@@ -305,16 +358,18 @@ public class CafeDesktopWindow {
         discountLabel = new JLabel(formatCurrency(BigDecimal.ZERO));
         totalLabel = new JLabel(formatCurrency(BigDecimal.ZERO));
         totalLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
-        totalLabel.setForeground(COFFEE);
+        totalLabel.setForeground(CARAMEL);
         addSummaryRow(panel, 0, "Tạm tính", subtotalLabel);
         addSummaryRow(panel, 1, "Giảm giá", discountLabel);
         addSummaryRow(panel, 2, "Khách cần trả", totalLabel);
 
         discountCode = new JTextField();
         discountCode.setToolTipText("Mã giảm giá (không bắt buộc)");
+        styleInput(discountCode);
         paymentSelector = new JComboBox<>(new String[]{
                 "Tiền mặt", "Chuyển khoản", "Thẻ", "Ví điện tử"
         });
+        styleInput(paymentSelector);
         JPanel checkoutFields = new JPanel(new GridBagLayout());
         checkoutFields.setOpaque(false);
         GridBagConstraints codeConstraints = constraints(0, 0);
@@ -345,24 +400,39 @@ public class CafeDesktopWindow {
     private JPanel createFooter() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(CREAM);
-        panel.setBorder(BorderFactory.createEmptyBorder(0, 24, 12, 24));
+        panel.setBorder(BorderFactory.createEmptyBorder(6, 28, 14, 28));
         footerStatus = new JLabel("Sẵn sàng");
         footerStatus.setForeground(MUTED);
+        footerStatus.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
         panel.add(footerStatus, BorderLayout.WEST);
         return panel;
     }
 
     private void refreshReferenceData(Long tableIdToSelect) {
+        ReferenceData data = fetchReferenceData();
+        applyReferenceData(data, tableIdToSelect);
+        footerStatus.setText("Đã tải " + data.tables().size() + " bàn, " + data.products().size()
+                + " món và " + data.employees().size() + " nhân viên");
+        loadSelectedTableInvoice();
+    }
+
+    private ReferenceData fetchReferenceData() {
         List<CafeTable> tables = tableRepository.findAll();
         List<Employee> employees = employeeRepository.findAll();
-        products = productRepository.findAll().stream()
+        List<Product> availableProducts = productRepository.findAll().stream()
                 .filter(product -> product.isAvailable() && product.getQuantity() != null && product.getQuantity() > 0)
                 .toList();
+        return new ReferenceData(tables, employees, availableProducts);
+    }
 
+    private void applyReferenceData(ReferenceData data, Long tableIdToSelect) {
+        Employee previouslySelectedEmployee = (Employee) employeeSelector.getSelectedItem();
+        Long employeeIdToSelect = previouslySelectedEmployee == null ? null : previouslySelectedEmployee.getId();
+        products = data.products();
         updatingTableSelector = true;
         try {
             tableSelector.removeAllItems();
-            for (CafeTable table : tables) {
+            for (CafeTable table : data.tables()) {
                 tableSelector.addItem(table);
             }
             if (tableIdToSelect != null) {
@@ -375,17 +445,62 @@ public class CafeDesktopWindow {
             }
 
             employeeSelector.removeAllItems();
-            for (Employee employee : employees) {
+            for (Employee employee : data.employees()) {
                 employeeSelector.addItem(employee);
+            }
+            if (employeeIdToSelect != null) {
+                for (int index = 0; index < employeeSelector.getItemCount(); index++) {
+                    if (employeeSelector.getItemAt(index).getId().equals(employeeIdToSelect)) {
+                        employeeSelector.setSelectedIndex(index);
+                        break;
+                    }
+                }
             }
         } finally {
             updatingTableSelector = false;
         }
 
         filterProducts();
-        loadSelectedTableInvoice();
-        footerStatus.setText("Đã tải " + tables.size() + " bàn, " + products.size()
-                + " món và " + employees.size() + " nhân viên");
+    }
+
+    private void refreshReferenceDataInBackground(Long tableIdToSelect) {
+        if (refreshInProgress) {
+            return;
+        }
+        refreshInProgress = true;
+        refreshButton.setEnabled(false);
+        refreshButton.setText("Đang tải...");
+        footerStatus.setText("Đang tải danh sách bàn, món và nhân viên...");
+
+        new SwingWorker<ReferenceData, Void>() {
+            @Override
+            protected ReferenceData doInBackground() {
+                return fetchReferenceData();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ReferenceData data = get();
+                    applyReferenceData(data, tableIdToSelect);
+                    footerStatus.setText("Đã tải " + data.tables().size() + " bàn, " + data.products().size()
+                            + " món và " + data.employees().size() + " nhân viên");
+                    loadSelectedTableInvoice();
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    showError(new IllegalStateException("Đã gián đoạn khi tải dữ liệu.", exception));
+                } catch (ExecutionException exception) {
+                    Throwable cause = exception.getCause();
+                    showError(cause instanceof RuntimeException runtimeException
+                            ? runtimeException
+                            : new IllegalStateException("Không thể tải dữ liệu từ database.", cause));
+                } finally {
+                    refreshInProgress = false;
+                    refreshButton.setEnabled(true);
+                    refreshButton.setText("Làm mới dữ liệu");
+                }
+            }
+        }.execute();
     }
 
     private void filterProducts() {
@@ -542,19 +657,14 @@ public class CafeDesktopWindow {
     }
 
     private JPanel createCard() {
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(231, 224, 215)),
-                BorderFactory.createEmptyBorder(16, 16, 16, 16)
-        ));
-        return panel;
+        return new CardPanel();
     }
 
     private JLabel sectionTitle(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 17));
         label.setForeground(COFFEE);
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 0));
         return label;
     }
 
@@ -564,8 +674,51 @@ public class CafeDesktopWindow {
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
-        button.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        button.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COFFEE),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)
+        ));
         return button;
+    }
+
+    private void secondaryButton(JButton button) {
+        button.setBackground(new Color(255, 255, 255, 20));
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        button.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(208, 187, 166)),
+                BorderFactory.createEmptyBorder(9, 14, 9, 14)
+        ));
+    }
+
+    private void styleInput(JComponent component) {
+        component.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        component.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER),
+                BorderFactory.createEmptyBorder(7, 9, 7, 9)
+        ));
+        if (component instanceof JTextField textField) {
+            textField.setBackground(Color.WHITE);
+            textField.setForeground(ESPRESSO);
+        } else if (component instanceof JComboBox<?> comboBox) {
+            comboBox.setBackground(Color.WHITE);
+            comboBox.setForeground(ESPRESSO);
+        } else if (component instanceof JSpinner spinner) {
+            spinner.setBackground(Color.WHITE);
+            spinner.setForeground(ESPRESSO);
+            spinner.setPreferredSize(new Dimension(76, 38));
+        }
+    }
+
+    private JScrollPane styledScrollPane(JComponent component) {
+        JScrollPane scrollPane = new JScrollPane(component);
+        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER));
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        return scrollPane;
     }
 
     private void addSummaryRow(JPanel panel, int row, String caption, JLabel value) {
@@ -606,6 +759,9 @@ public class CafeDesktopWindow {
             JLabel label = (JLabel) super.getListCellRendererComponent(
                     list, value, index, isSelected, cellHasFocus
             );
+            label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+            label.setBackground(isSelected ? SELECTED : Color.WHITE);
+            label.setForeground(ESPRESSO);
             if (value instanceof Product product) {
                 String safeName = product.getName()
                         .replace("&", "&amp;")
@@ -614,8 +770,37 @@ public class CafeDesktopWindow {
                 label.setText("<html><b>" + safeName + "</b><br>"
                         + CURRENCY.format(product.getPrice()) + " &nbsp; · &nbsp; Còn "
                         + product.getQuantity() + "</html>");
-                label.setBorder(BorderFactory.createEmptyBorder(9, 10, 9, 10));
+                label.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(243, 239, 233)),
+                        BorderFactory.createEmptyBorder(9, 12, 9, 12)
+                ));
             }
+            return label;
+        }
+    }
+
+    private static final class InvoiceCellRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(
+                JTable table,
+                Object value,
+                boolean isSelected,
+                boolean hasFocus,
+                int row,
+                int column
+        ) {
+            JLabel label = (JLabel) super.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column
+            );
+            label.setOpaque(true);
+            label.setForeground(ESPRESSO);
+            label.setBackground(isSelected ? SELECTED : (row % 2 == 0 ? Color.WHITE : new Color(252, 250, 247)));
+            label.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(243, 239, 233)),
+                    BorderFactory.createEmptyBorder(0, column == 0 ? 14 : 8, 0, 10)
+            ));
+            label.setHorizontalAlignment(column >= 2 ? JLabel.RIGHT : JLabel.LEFT);
             return label;
         }
     }
@@ -633,8 +818,13 @@ public class CafeDesktopWindow {
             JLabel label = (JLabel) super.getListCellRendererComponent(
                     list, value, index, isSelected, cellHasFocus
             );
+            label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+            label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             if (value instanceof CafeTable table) {
                 label.setText("Bàn " + table.getTableNumber() + " · " + tableStatusLabel(table.getStatus()));
+                if (!isSelected) {
+                    label.setForeground(table.getStatus() == TableStatus.AVAILABLE ? new Color(48, 125, 87) : ESPRESSO);
+                }
             }
             return label;
         }
@@ -662,6 +852,8 @@ public class CafeDesktopWindow {
             JLabel label = (JLabel) super.getListCellRendererComponent(
                     list, value, index, isSelected, cellHasFocus
             );
+            label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+            label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
             if (value instanceof Employee employee) {
                 label.setText(employee.getName());
             } else if (value == null && index >= 0) {
@@ -669,5 +861,53 @@ public class CafeDesktopWindow {
             }
             return label;
         }
+    }
+
+    private static final class CardPanel extends JPanel {
+
+        private CardPanel() {
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(71, 48, 33, 16));
+            g2.fillRoundRect(2, 4, getWidth() - 5, getHeight() - 6, 18, 18);
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(0, 0, getWidth() - 5, getHeight() - 7, 18, 18);
+            g2.setColor(BORDER);
+            g2.drawRoundRect(0, 0, getWidth() - 5, getHeight() - 7, 18, 18);
+            g2.dispose();
+            super.paintComponent(graphics);
+        }
+    }
+
+    private static final class GradientHeader extends JPanel {
+
+        private GradientHeader() {
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setPaint(new java.awt.GradientPaint(0, 0, ESPRESSO, getWidth(), getHeight(), COFFEE));
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.setColor(new Color(255, 255, 255, 18));
+            g2.fillOval(getWidth() - 190, -120, 300, 300);
+            g2.dispose();
+            super.paintComponent(graphics);
+        }
+    }
+
+    private record ReferenceData(
+            List<CafeTable> tables,
+            List<Employee> employees,
+            List<Product> products
+    ) {
     }
 }
