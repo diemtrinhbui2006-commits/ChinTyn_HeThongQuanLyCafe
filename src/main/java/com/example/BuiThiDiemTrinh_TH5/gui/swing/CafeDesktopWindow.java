@@ -275,9 +275,8 @@ public class CafeDesktopWindow {
         subtitleConstraints.insets = new Insets(4, 2, 0, 0);
         titles.add(subtitle, subtitleConstraints);
 
-        // Khu vực phải: Nút Làm mới dữ liệu độc lập, thoáng đãng, không bị đè chữ
-        refreshButton = new JButton("🔄 Làm mới dữ liệu (F5)");
-        secondaryButton(refreshButton);
+        // Khu vực phải: Nút Làm mới dữ liệu độc lập với màu nền đậm đặc, triệt tiêu 100% ghosting artifact
+        refreshButton = createHeaderRefreshButton();
         refreshButton.addActionListener(event -> refreshReferenceDataInBackground(selectedTableId()));
 
         header.add(titles, BorderLayout.WEST);
@@ -1224,16 +1223,34 @@ public class CafeDesktopWindow {
         return button;
     }
 
-    private void secondaryButton(JButton button) {
-        button.setBackground(new Color(255, 255, 255, 25));
+    private JButton createHeaderRefreshButton() {
+        JButton button = new JButton("🔄 Làm mới dữ liệu (F5)") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (getModel().isPressed()) {
+                    g2.setColor(new Color(155, 95, 45));
+                } else if (getModel().isRollover()) {
+                    g2.setColor(new Color(210, 150, 90));
+                } else {
+                    g2.setColor(CARAMEL);
+                }
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.setColor(new Color(245, 215, 185));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(225, 205, 185)),
-                BorderFactory.createEmptyBorder(9, 16, 9, 16)
-        ));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        return button;
     }
 
     private void buttonToolbarStyle(JButton button) {
@@ -1417,11 +1434,12 @@ public class CafeDesktopWindow {
 
     private static final class GradientHeader extends JPanel {
         private GradientHeader() {
-            setOpaque(false);
+            setOpaque(true);
         }
 
         @Override
         protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
             Graphics2D g2 = (Graphics2D) graphics.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setPaint(new java.awt.GradientPaint(0, 0, ESPRESSO, getWidth(), getHeight(), COFFEE));
@@ -1429,7 +1447,6 @@ public class CafeDesktopWindow {
             g2.setColor(new Color(255, 255, 255, 15));
             g2.fillOval(getWidth() - 220, -110, 320, 320);
             g2.dispose();
-            super.paintComponent(graphics);
         }
     }
 
