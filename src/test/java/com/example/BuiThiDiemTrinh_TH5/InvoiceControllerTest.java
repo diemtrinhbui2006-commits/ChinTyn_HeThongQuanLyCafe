@@ -74,7 +74,7 @@ class InvoiceControllerTest {
 
         product = new Product();
         product.setName("Ca Phe Muoi");
-        product.setPrice(35000.0);
+        product.setPrice(new BigDecimal("35000.00"));
         product.setQuantity(40);
         product.setCategory(cat);
         product = productRepository.save(product);
@@ -83,7 +83,7 @@ class InvoiceControllerTest {
         employee.setName("Nguyen Thi Mong Tuyen");
         employee.setEmail("tuyen.ctrl." + System.currentTimeMillis() + "@cafe.test");
         employee.setPosition("STAFF");
-        employee.setSalary(7500000.0);
+        employee.setSalary(new BigDecimal("7500000.00"));
         employee = employeeRepository.save(employee);
 
         table = new CafeTable();

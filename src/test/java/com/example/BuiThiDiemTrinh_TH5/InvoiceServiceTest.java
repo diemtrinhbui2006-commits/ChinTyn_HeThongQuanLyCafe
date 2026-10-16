@@ -73,7 +73,7 @@ class InvoiceServiceTest {
         coffee = new Product();
         coffee.setName("Ca Phe Sua Test");
         coffee.setDescription("Ca phe ngon");
-        coffee.setPrice(30000.0);
+        coffee.setPrice(new BigDecimal("30000.00"));
         coffee.setQuantity(50);
         coffee.setCategory(cat);
         coffee = productRepository.save(coffee);
@@ -81,7 +81,7 @@ class InvoiceServiceTest {
         tea = new Product();
         tea.setName("Tra Dao Test");
         tea.setDescription("Tra dao thom");
-        tea.setPrice(40000.0);
+        tea.setPrice(new BigDecimal("40000.00"));
         tea.setQuantity(30);
         tea.setCategory(cat);
         tea = productRepository.save(tea);
@@ -91,7 +91,7 @@ class InvoiceServiceTest {
         employee.setEmail("tuyen." + System.currentTimeMillis() + "@cafe.test");
         employee.setPhone("0912345678");
         employee.setPosition("STAFF");
-        employee.setSalary(8000000.0);
+        employee.setSalary(new BigDecimal("8000000.00"));
         employee = employeeRepository.save(employee);
 
         table = new CafeTable();

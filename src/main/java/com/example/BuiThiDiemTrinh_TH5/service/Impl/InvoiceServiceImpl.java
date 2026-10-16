@@ -168,7 +168,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 detail.setQuantity(newQty);
                 detail.setLineTotal(detail.getUnitPrice().multiply(BigDecimal.valueOf(newQty)).setScale(2, RoundingMode.HALF_UP));
             } else {
-                BigDecimal unitPrice = BigDecimal.valueOf(product.getPrice()).setScale(2, RoundingMode.HALF_UP);
+                BigDecimal unitPrice = product.getPrice().setScale(2, RoundingMode.HALF_UP);
                 BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(item.quantity())).setScale(2, RoundingMode.HALF_UP);
                 InvoiceDetail detail = new InvoiceDetail(
                         null,
