@@ -4,6 +4,7 @@
 
 export function getProductImage(name) {
   const n = (name || '').toLowerCase();
+  if (n.includes('bạc xỉu') || n.includes('bac xiu') || n.includes('bạc sỉu')) return '/uploads/bac_xiu.jpg';
   if (n.includes('muối') || n.includes('muoi')) return '/uploads/caphe_muoi.jpg';
   if (n.includes('sữa đá') || n.includes('sua da') || n.includes('nâu đá')) return '/uploads/caphe_suada.jpg';
   if (n.includes('đen') || n.includes('den')) return '/uploads/caphe_denda.jpg';
