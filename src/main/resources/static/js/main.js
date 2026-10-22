@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initGlobalRefresh();
 
   // Khởi tạo xác thực & đăng xuất
-  initAuthEvents();
+  await initAuthEvents(async () => {
+    await initPosModule();
+  });
 
   // Khởi tạo các sự kiện của Modal
   initReceiptModalEvents();
@@ -29,8 +31,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCategoryAdminEvents();
   initCustomerAdminEvents();
 
-  // Khởi chạy màn hình POS mặc định
-  await initPosModule();
 });
 
 // Đồng hồ thời gian thực

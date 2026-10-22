@@ -84,9 +84,11 @@ Mở trình duyệt truy cập ngay: 👉 **`http://localhost:8080/`** (hoặc `
 
 | Tên đăng nhập | Mật khẩu | Quyền hạn |
 | :--- | :--- | :--- |
-| **admin** | Bất kỳ (vd: `123456`) | **Admin**: Toàn quyền quản trị, POS, Món, Bàn, Báo cáo |
-| **cashier1** | Bất kỳ (vd: `123456`) | **Cashier**: Bán hàng POS, Khách hàng, Khuyến mãi |
-| **staff1** | Bất kỳ (vd: `123456`) | **Staff**: Bán hàng POS, Kho nguyên liệu |
+| **admin** | `123456` (mật khẩu dữ liệu mẫu) | **Admin**: Quản trị tài khoản, nhân viên, món, danh mục và bàn; sử dụng POS |
+| **cashier** | `123456` (mật khẩu dữ liệu mẫu) | **Cashier**: Sử dụng POS và quản lý khách hàng |
+| **staff** | `123456` (mật khẩu dữ liệu mẫu) | **Staff**: Sử dụng POS và quản lý khách hàng |
+
+Đăng nhập được xác thực ở backend và phiên được lưu bằng cookie HttpOnly. Các mật khẩu trên chỉ dùng cho dữ liệu mẫu sau khi import `cafe.sql`; hãy đổi chúng trước khi sử dụng dữ liệu thật. Tài khoản mới cần mật khẩu tối thiểu 8 ký tự. Khi triển khai qua HTTPS, đặt biến môi trường `COOKIE_SECURE=true` và cấu hình thông tin MySQL riêng qua `DB_USERNAME`/`DB_PASSWORD`.
 
 ---
 

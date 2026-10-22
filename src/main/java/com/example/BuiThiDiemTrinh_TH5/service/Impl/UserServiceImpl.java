@@ -1,14 +1,12 @@
 package com.example.BuiThiDiemTrinh_TH5.service.Impl;
 
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.List;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
+import java.util.Locale;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.example.BuiThiDiemTrinh_TH5.entity.Employee;
 import com.example.BuiThiDiemTrinh_TH5.entity.User;
@@ -21,17 +19,16 @@ import com.example.BuiThiDiemTrinh_TH5.service.UserService;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private static final int SALT_LENGTH = 16;
-    private static final int ITERATIONS = 120_000;
-    private static final int KEY_LENGTH = 256;
+    private static final Set<String> ALLOWED_ROLES = Set.of("ADMIN", "CASHIER", "STAFF");
 
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, EmployeeRepository employeeRepository) {
+    public UserServiceImpl(UserRepository userRepository, EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.employeeRepository = employeeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -39,7 +36,7 @@ public class UserServiceImpl implements UserService {
         validate(user);
         user.setId(null);
         user.setEmployee(resolveEmployee(user.getEmployee()));
-        user.setPassword(hashPassword(user.getPassword()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -61,7 +58,7 @@ public class UserServiceImpl implements UserService {
         User existing = getUserById(id);
         existing.setUsername(user.getUsername());
         existing.setRole(user.getRole());
-        existing.setPassword(hashPassword(user.getPassword()));
+        existing.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getEmployee() != null) {
             existing.setEmployee(resolveEmployee(user.getEmployee()));
         }
@@ -80,26 +77,15 @@ public class UserServiceImpl implements UserService {
         if (user.getPassword() == null || user.getPassword().isBlank()) {
             throw new BadRequestException("Mật khẩu không được để trống");
         }
+        if (user.getPassword().length() < 8) {
+            throw new BadRequestException("Mật khẩu phải có ít nhất 8 ký tự");
+        }
         if (user.getRole() == null || user.getRole().isBlank()) {
             throw new BadRequestException("Vai trò không được để trống");
         }
-    }
-
-    private String hashPassword(String password) {
-        byte[] salt = new byte[SALT_LENGTH];
-        secureRandom.nextBytes(salt);
-        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, KEY_LENGTH);
-        try {
-            byte[] hash = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-                    .generateSecret(spec)
-                    .getEncoded();
-            return "pbkdf2$" + ITERATIONS + "$"
-                    + Base64.getEncoder().encodeToString(salt) + "$"
-                    + Base64.getEncoder().encodeToString(hash);
-        } catch (java.security.GeneralSecurityException exception) {
-            throw new IllegalStateException("Không thể mã hóa mật khẩu", exception);
-        } finally {
-            spec.clearPassword();
+        user.setRole(user.getRole().trim().toUpperCase(Locale.ROOT));
+        if (!ALLOWED_ROLES.contains(user.getRole())) {
+            throw new BadRequestException("Vai trò chỉ được là ADMIN, CASHIER hoặc STAFF");
         }
     }
 

@@ -2,6 +2,7 @@ import { tableApi } from '../api/tableApi.js';
 import { productApi } from '../api/productApi.js';
 import { categoryApi } from '../api/categoryApi.js';
 import { invoiceApi } from '../api/invoiceApi.js';
+import { getCurrentUser } from './authModule.js';
 import { formatVND } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
 import { getProductImage } from '../utils/imageMatcher.js';
@@ -269,6 +270,7 @@ async function addFood(product) {
   try {
     const payload = {
       tableId: posState.selectedTable.id,
+      employeeId: getCurrentUser().employeeId,
       productId: product.id,
       quantity: 1,
     };
@@ -324,7 +326,7 @@ async function changeItemQty(productId, delta) {
 
   try {
     if (delta > 0) {
-      await invoiceApi.orderFood({ tableId: posState.selectedTable.id, productId, quantity: 1 });
+      await invoiceApi.orderFood({ tableId: posState.selectedTable.id, employeeId: getCurrentUser().employeeId, productId, quantity: 1 });
     } else {
       await invoiceApi.removeFood(inv.id, productId, 1);
     }

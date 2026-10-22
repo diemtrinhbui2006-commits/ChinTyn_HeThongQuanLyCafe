@@ -2,17 +2,30 @@
  * API Client - Hàm gọi HTTP chung (fetch)
  */
 
+function readCookie(name) {
+  const prefix = `${name}=`;
+  const entry = document.cookie.split('; ').find(cookie => cookie.startsWith(prefix));
+  return entry ? decodeURIComponent(entry.slice(prefix.length)) : null;
+}
+
 export async function request(endpoint, options = {}) {
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  };
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    ...options.headers,
+  });
+  const csrfToken = readCookie('XSRF-TOKEN');
+  if (csrfToken && !['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
+    headers.set('X-XSRF-TOKEN', csrfToken);
+  }
 
   try {
-    const res = await fetch(endpoint, config);
+    const res = await fetch(endpoint, {
+      ...options,
+      method,
+      headers,
+      credentials: 'same-origin',
+    });
     if (res.status === 204) return null;
     const data = await res.json().catch(() => null);
 

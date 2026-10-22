@@ -12,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,6 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@WithMockUser(roles = "CASHIER")
 class InvoiceControllerTest {
 
     @Autowired
@@ -106,6 +109,7 @@ class InvoiceControllerTest {
         );
 
         mockMvc.perform(post("/api/invoices/order")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -141,6 +145,7 @@ class InvoiceControllerTest {
         ApplyDiscountRequest discountReq = new ApplyDiscountRequest("GIAM10", null, null);
 
         mockMvc.perform(post("/api/invoices/" + invoice.getId() + "/discount")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(discountReq)))
                 .andExpect(status().isOk())
@@ -163,6 +168,7 @@ class InvoiceControllerTest {
         );
 
         mockMvc.perform(post("/api/invoices/" + invoice.getId() + "/checkout")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(checkoutReq)))
                 .andExpect(status().isOk())
