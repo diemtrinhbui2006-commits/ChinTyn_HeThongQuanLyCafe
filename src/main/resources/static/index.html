@@ -422,6 +422,43 @@
     </div>
   </div>
 
+
+  <!-- ================= MODAL SỬA MÓN ================= -->
+  <div class="modal-backdrop" id="editProductModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>✏️ Chỉnh Sửa Thông Tin Món</h3>
+        <button class="btn-close" id="btnCloseEditProductModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editProductId">
+        <div class="form-field">
+          <label>Tên món ăn / Đồ uống (*):</label>
+          <input type="text" id="editProductName" placeholder="Ví dụ: Cà phê muối, Trà vải...">
+        </div>
+        <div class="form-field">
+          <label>Danh mục (*):</label>
+          <select id="editProductCategorySelect"></select>
+        </div>
+        <div class="form-field">
+          <label>Đơn giá (VNĐ) (*):</label>
+          <input type="number" id="editProductPrice" placeholder="Ví dụ: 35000" min="1000">
+        </div>
+        <div class="form-field">
+          <label>Số lượng tồn kho:</label>
+          <input type="number" id="editProductQty" min="0">
+        </div>
+        <div class="form-field">
+          <label>Mô tả hương vị:</label>
+          <textarea id="editProductDesc" rows="2" placeholder="Vị ngọt thanh, thơm béo đặc trưng..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-primary" id="btnSubmitEditProduct">Cập Nhật Món</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= MODAL IN HÓA ĐƠN NHIỆT 80MM ================= -->
   <div class="modal-backdrop" id="thermalReceiptModal">
     <div class="modal-window" style="max-width: 380px;">
