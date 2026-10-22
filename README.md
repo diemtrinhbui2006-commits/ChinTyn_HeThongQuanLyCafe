@@ -33,14 +33,6 @@ Tren Windows:
 .\mvnw.cmd spring-boot:run
 ```
 
-Mac dinh ung dung chay REST API. De mo giao dien desktop Java Swing cung backend:
-
-```powershell
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--app.gui.enabled=true --server.port=8081"
-```
-
-Giao dien dung chung `InvoiceGuiBinding` va `InvoiceService` de goi mon, cap nhat ton kho, tinh hoa don va thanh toan xuong database. Chi bat che do desktop tren may co moi truong do hoa.
-
 Bien dich va kiem tra:
 
 ```powershell
