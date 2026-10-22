@@ -221,3 +221,173 @@
   justify-content: flex-end;
   gap: 10px;
 }
+
+
+/* ==================== PHÂN TRANG (PAGINATION) ==================== */
+.pagination-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #fff;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pagination-info {
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-btn {
+  padding: 5px 10px;
+  border: 1px solid var(--border-color);
+  background: #fff;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 32px;
+  text-align: center;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.pagination-btn.active {
+  background: var(--primary-accent);
+  color: #fff;
+  border-color: var(--primary-accent);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-size-selector {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  outline: none;
+  background: #fff;
+  color: var(--text-primary);
+}
+
+/* ==================== MODAL ĐĂNG NHẬP (LOGIN OVERLAY) ==================== */
+.login-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-backdrop.show {
+  display: flex;
+}
+
+.login-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 440px;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2), 0 8px 10px -6px rgb(0 0 0 / 0.2);
+  overflow: hidden;
+  animation: modalEnter 0.25s ease-out;
+}
+
+.login-header {
+  background: var(--sidebar-bg);
+  padding: 24px 20px;
+  text-align: center;
+  color: #fff;
+}
+
+.login-header .login-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 10px;
+  background: linear-gradient(135deg, var(--primary-accent), #b45309);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.login-header h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.login-header p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.login-body {
+  padding: 24px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quick-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.quick-roles-title {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.quick-role-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-quick-role {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn-quick-role:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #2563eb;
+}

@@ -79,3 +79,24 @@
 .btn-refresh:hover {
   background: #e2e8f0;
 }
+
+.btn-topbar-logout {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.btn-topbar-logout:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}

@@ -448,3 +448,21 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+
+/* POS PRODUCTS PAGINATION */
+.pos-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 18px;
+  background: #fff;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.pos-pagination-btns {
+  display: flex;
+  gap: 6px;
+}

@@ -6,6 +6,13 @@ import { showToast } from '../utils/toast.js';
 let cachedProducts = [];
 let cachedCategories = [];
 
+// Trạng thái phân trang quản lý món
+const paginationState = {
+  currentPage: 1,
+  pageSize: 7,
+  searchKeyword: '',
+};
+
 /**
  * Module Quản Lý Thực Đơn (Products)
  */
@@ -23,66 +30,185 @@ export async function loadProductsAdmin() {
     cachedProducts = products || [];
     cachedCategories = categories || [];
 
-    // Tạo từ điển mã danh mục -> tên danh mục
-    const catMap = {};
-    cachedCategories.forEach(c => {
-      catMap[c.id] = c.name;
-    });
-
-    tbody.innerHTML = '';
-
-    if (cachedProducts.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" align="center">Chưa có món nào trong thực đơn</td></tr>';
-      return;
-    }
-
-    cachedProducts.forEach(p => {
-      const isAvail = p.available !== false;
-      const catName = catMap[p.categoryId] || (p.category?.name) || 'Chung';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>#${p.id}</strong></td>
-        <td><strong>${p.name}</strong></td>
-        <td><span style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:0.82rem;">${catName}</span></td>
-        <td style="font-weight:700; color:#d97706;">${formatVND(p.price)}</td>
-        <td><span class="badge-tag ${isAvail ? 'active' : 'disabled'}">${isAvail ? 'Đang bán' : 'Ngừng bán'}</span></td>
-        <td>
-          <button class="btn-action-sm btn-edit-prod" data-id="${p.id}" style="color:#2563eb; border-color:#93c5fd;">
-            ✏️ Sửa
-          </button>
-          <button class="btn-action-sm btn-toggle-avail" data-id="${p.id}" data-status="${!isAvail}">
-            ${isAvail ? 'Ngừng bán' : 'Bật bán'}
-          </button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    // 1. Gán sự kiện click Sửa món
-    tbody.querySelectorAll('.btn-edit-prod').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.dataset.id);
-        const prod = cachedProducts.find(x => x.id === id);
-        if (prod) openEditProductModal(prod);
-      });
-    });
-
-    // 2. Gán sự kiện click Bật/Tắt bán
-    tbody.querySelectorAll('.btn-toggle-avail').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id = btn.dataset.id;
-        const newStatus = btn.dataset.status === 'true';
-        try {
-          await productApi.setAvailability(id, newStatus);
-          showToast('Cập nhật trạng thái thành công', 'success');
-          loadProductsAdmin();
-        } catch (e) {
-          showToast('Lỗi cập nhật: ' + e.message, 'error');
-        }
-      });
-    });
+    renderProductsTable();
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
+  }
+}
+
+/**
+ * Render bảng danh sách sản phẩm theo trang và từ khóa tìm kiếm
+ */
+export function renderProductsTable() {
+  const tbody = document.getElementById('productsAdminBody');
+  const paginationEl = document.getElementById('productsPagination');
+  if (!tbody) return;
+
+  // Lập từ điển danh mục
+  const catMap = {};
+  cachedCategories.forEach(c => {
+    catMap[c.id] = c.name;
+  });
+
+  // 1. Lọc theo từ khóa tìm kiếm
+  const kw = paginationState.searchKeyword.toLowerCase().trim();
+  const filtered = cachedProducts.filter(p => {
+    if (!kw) return true;
+    const catName = (catMap[p.categoryId] || '').toLowerCase();
+    const prodName = (p.name || '').toLowerCase();
+    return prodName.includes(kw) || catName.includes(kw);
+  });
+
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / paginationState.pageSize) || 1;
+
+  // Giới hạn trang hiện tại trong phạm vi hợp lệ
+  if (paginationState.currentPage > totalPages) paginationState.currentPage = totalPages;
+  if (paginationState.currentPage < 1) paginationState.currentPage = 1;
+
+  const startIdx = (paginationState.currentPage - 1) * paginationState.pageSize;
+  const endIdx = Math.min(startIdx + paginationState.pageSize, totalItems);
+  const pageItems = filtered.slice(startIdx, endIdx);
+
+  tbody.innerHTML = '';
+
+  if (pageItems.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" align="center" style="color:var(--text-secondary); padding:20px;">
+      ${kw ? `Không tìm thấy món nào khớp với từ khóa "${kw}"` : 'Chưa có món nào trong thực đơn'}
+    </td></tr>`;
+    if (paginationEl) paginationEl.innerHTML = '';
+    return;
+  }
+
+  // 2. Render từng dòng món ăn
+  pageItems.forEach(p => {
+    const isAvail = p.available !== false;
+    const catName = catMap[p.categoryId] || (p.category?.name) || 'Chung';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>#${p.id}</strong></td>
+      <td><strong>${p.name}</strong></td>
+      <td><span style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:0.82rem;">${catName}</span></td>
+      <td style="font-weight:700; color:#d97706;">${formatVND(p.price)}</td>
+      <td><span class="badge-tag ${isAvail ? 'active' : 'disabled'}">${isAvail ? 'Đang bán' : 'Ngừng bán'}</span></td>
+      <td>
+        <button class="btn-action-sm btn-edit-prod" data-id="${p.id}" style="color:#2563eb; border-color:#93c5fd;">
+          ✏️ Sửa
+        </button>
+        <button class="btn-action-sm btn-toggle-avail" data-id="${p.id}" data-status="${!isAvail}">
+          ${isAvail ? 'Ngừng bán' : 'Bật bán'}
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Gán sự kiện click nút Sửa
+  tbody.querySelectorAll('.btn-edit-prod').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = parseInt(btn.dataset.id);
+      const prod = cachedProducts.find(x => x.id === id);
+      if (prod) openEditProductModal(prod);
+    });
+  });
+
+  // Gán sự kiện click Bật/Tắt bán
+  tbody.querySelectorAll('.btn-toggle-avail').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const newStatus = btn.dataset.status === 'true';
+      try {
+        await productApi.setAvailability(id, newStatus);
+        showToast('Cập nhật trạng thái thành công', 'success');
+        loadProductsAdmin();
+      } catch (e) {
+        showToast('Lỗi cập nhật: ' + e.message, 'error');
+      }
+    });
+  });
+
+  // 3. Render Thanh Phân Trang
+  renderPaginationBar(totalItems, totalPages, startIdx, endIdx);
+}
+
+/**
+ * Hiển thị thanh điều khiển phân trang
+ */
+function renderPaginationBar(totalItems, totalPages, startIdx, endIdx) {
+  const container = document.getElementById('productsPagination');
+  if (!container) return;
+
+  const current = paginationState.currentPage;
+
+  let pagesHtml = '';
+  for (let i = 1; i <= totalPages; i++) {
+    pagesHtml += `
+      <button class="pagination-btn ${i === current ? 'active' : ''}" data-page="${i}">
+        ${i}
+      </button>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="pagination-info">
+      Hiển thị <strong>${totalItems > 0 ? startIdx + 1 : 0} - ${endIdx}</strong> / tổng <strong>${totalItems}</strong> món
+      <span style="margin-left: 10px;">| Số món/trang:</span>
+      <select class="page-size-selector" id="adminPageSizeSelect">
+        <option value="5" ${paginationState.pageSize === 5 ? 'selected' : ''}>5</option>
+        <option value="7" ${paginationState.pageSize === 7 ? 'selected' : ''}>7</option>
+        <option value="10" ${paginationState.pageSize === 10 ? 'selected' : ''}>10</option>
+        <option value="15" ${paginationState.pageSize === 15 ? 'selected' : ''}>15</option>
+      </select>
+    </div>
+
+    <div class="pagination-controls">
+      <button class="pagination-btn" id="btnFirstPage" ${current === 1 ? 'disabled' : ''} title="Trang đầu">« Đầu</button>
+      <button class="pagination-btn" id="btnPrevPage" ${current === 1 ? 'disabled' : ''} title="Trang trước">‹ Trước</button>
+      ${pagesHtml}
+      <button class="pagination-btn" id="btnNextPage" ${current === totalPages ? 'disabled' : ''} title="Trang sau">Sau ›</button>
+      <button class="pagination-btn" id="btnLastPage" ${current === totalPages ? 'disabled' : ''} title="Trang cuối">Cuối »</button>
+    </div>
+  `;
+
+  // Gán sự kiện cho các nút phân trang
+  container.querySelectorAll('.pagination-btn[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      paginationState.currentPage = parseInt(btn.dataset.page);
+      renderProductsTable();
+    });
+  });
+
+  const btnFirst = document.getElementById('btnFirstPage');
+  if (btnFirst) btnFirst.addEventListener('click', () => {
+    paginationState.currentPage = 1;
+    renderProductsTable();
+  });
+
+  const btnPrev = document.getElementById('btnPrevPage');
+  if (btnPrev) btnPrev.addEventListener('click', () => {
+    paginationState.currentPage--;
+    renderProductsTable();
+  });
+
+  const btnNext = document.getElementById('btnNextPage');
+  if (btnNext) btnNext.addEventListener('click', () => {
+    paginationState.currentPage++;
+    renderProductsTable();
+  });
+
+  const btnLast = document.getElementById('btnLastPage');
+  if (btnLast) btnLast.addEventListener('click', () => {
+    paginationState.currentPage = totalPages;
+    renderProductsTable();
+  });
+
+  const sizeSelect = document.getElementById('adminPageSizeSelect');
+  if (sizeSelect) {
+    sizeSelect.addEventListener('change', (e) => {
+      paginationState.pageSize = parseInt(e.target.value);
+      paginationState.currentPage = 1;
+      renderProductsTable();
+    });
   }
 }
 
@@ -113,9 +239,19 @@ function openEditProductModal(prod) {
 }
 
 /**
- * Khởi tạo sự kiện cho các modal Thêm món và Sửa món
+ * Khởi tạo sự kiện cho các modal Thêm món, Sửa món và Ô tìm kiếm phân trang
  */
 export function initProductModalEvents() {
+  // === TÌM KIẾM MÓN ĂN TRÊN BẢNG ===
+  const searchInput = document.getElementById('adminProductSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      paginationState.searchKeyword = e.target.value;
+      paginationState.currentPage = 1;
+      renderProductsTable();
+    });
+  }
+
   // === THÊM MÓN MỚI ===
   const openAddBtn = document.getElementById('btnOpenAddProductModal');
   if (openAddBtn) {

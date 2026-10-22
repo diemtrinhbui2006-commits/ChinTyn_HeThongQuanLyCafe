@@ -11,12 +11,16 @@ import { loadOrdersHistory } from './modules/orderModule.js';
 import { loadCustomersAdmin, initCustomerAdminEvents } from './modules/customerModule.js';
 import { loadUsersAdmin } from './modules/userModule.js';
 import { initReceiptModalEvents } from './modules/receiptModal.js';
+import { initAuthEvents } from './modules/authModule.js';
 import { showToast } from './utils/toast.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   initClock();
   initNavigation();
   initGlobalRefresh();
+
+  // Khởi tạo xác thực & đăng xuất
+  initAuthEvents();
 
   // Khởi tạo các sự kiện của Modal
   initReceiptModalEvents();
