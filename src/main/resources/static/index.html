@@ -62,11 +62,15 @@
 
     <!-- User Profile Card in Sidebar -->
     <div class="user-profile-card">
-      <div class="user-avatar">QT</div>
+      <div class="user-avatar" id="sidebarUserAvatar">QT</div>
       <div class="user-details">
-        <div class="user-name">Nguyễn Quản Trị</div>
-        <span class="user-role-badge">ADMIN</span>
+        <div class="user-name" id="sidebarUserName">Nguyễn Quản Trị</div>
+        <span class="user-role-badge" id="sidebarUserRole">ADMIN</span>
       </div>
+      <button class="btn-logout" id="btnLogout" title="Đăng xuất khỏi hệ thống">
+        <span>🚪</span>
+        <span>Thoát</span>
+      </button>
     </div>
   </aside>
 
@@ -87,6 +91,10 @@
         <button class="btn-refresh" id="btnRefreshAll" title="Làm mới toàn bộ dữ liệu">
           <span>🔄</span>
           <span>Làm mới (F5)</span>
+        </button>
+        <button class="btn-topbar-logout" id="btnTopbarLogout" title="Đăng xuất khỏi hệ thống">
+          <span>🚪</span>
+          <span>Đăng xuất</span>
         </button>
       </div>
     </header>
@@ -127,6 +135,7 @@
             <div class="products-grid" id="productsGrid">
               <!-- Render động -->
             </div>
+            <div class="pos-pagination" id="posProductsPagination"></div>
           </div>
 
           <!-- CỘT 3: HÓA ĐƠN & ORDER -->
@@ -263,7 +272,10 @@
           <div class="data-card">
             <div class="data-card-header">
               <h3>Danh Sách Thực Đơn & Trạng Thái Món</h3>
-              <button class="btn-primary" id="btnOpenAddProductModal">+ Thêm Món Mới</button>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="adminProductSearch" placeholder="🔍 Tìm kiếm món..." style="padding:6px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; width:220px;">
+                <button class="btn-primary" id="btnOpenAddProductModal">+ Thêm Món Mới</button>
+              </div>
             </div>
             <table class="data-table">
               <thead>
@@ -278,6 +290,8 @@
               </thead>
               <tbody id="productsAdminBody"></tbody>
             </table>
+            <!-- Phân trang quản lý món -->
+            <div class="pagination-wrapper" id="productsPagination"></div>
           </div>
         </div>
       </section>
@@ -472,6 +486,39 @@
       <div class="modal-foot" style="justify-content: space-between;">
         <button class="btn-action-sm" onclick="document.getElementById('thermalReceiptModal').classList.remove('show');">Đóng</button>
         <button class="btn-primary" id="btnPrintReceiptBtn">🖨️ In Hóa Đơn Ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL ĐĂNG NHẬP / ĐĂNG XUẤT ================= -->
+  <div class="login-backdrop" id="loginModal">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-icon">☕</div>
+        <h2>CHINTYN COFFEE</h2>
+        <p>Đăng nhập hệ thống quản lý bán hàng</p>
+      </div>
+      <div class="login-body">
+        <div class="form-field">
+          <label>Tên đăng nhập:</label>
+          <input type="text" id="loginUsername" placeholder="Nhập tên tài khoản (admin, cashier, staff)..." autocomplete="off" value="admin">
+        </div>
+        <div class="form-field">
+          <label>Mật khẩu:</label>
+          <input type="password" id="loginPassword" placeholder="Nhập mật khẩu (123456)..." value="123456">
+        </div>
+        <button class="btn-primary" id="btnSubmitLogin" style="padding:10px; font-size:0.95rem; margin-top:4px;">
+          🚀 Đăng Nhập Hệ Thống
+        </button>
+
+        <div class="quick-roles">
+          <div class="quick-roles-title">⚡ Chọn nhanh tài khoản demo (Mật khẩu: 123456):</div>
+          <div class="quick-role-btns">
+            <button class="btn-quick-role" data-user="admin" data-name="Nguyễn Quản Trị" data-role="ADMIN" data-avatar="QT">👑 Admin</button>
+            <button class="btn-quick-role" data-user="cashier" data-name="Trần Thu Ngân" data-role="CASHIER" data-avatar="TN">💼 Thu ngân</button>
+            <button class="btn-quick-role" data-user="staff" data-name="Lê Phục Vụ" data-role="STAFF" data-avatar="PV">☕ Phục vụ</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
