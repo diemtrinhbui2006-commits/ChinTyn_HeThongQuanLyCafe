@@ -1,42 +1,98 @@
-# He thong quan ly quan cafe
+# He Thong Quan Ly Quan Cafe (ChinTyn Cafe)
 
-Project Java Spring Boot quan ly nhan vien, tai khoan, mon, ban va hoa don cafe.
+Dự án Hệ Thống Quản Lý Bán Hàng & POS Quán Cafe kết hợp:
+- **Backend**: Java 17 + Spring Boot 3.3.4 + Spring Data JPA + MySQL.
+- **Frontend SPA**: React.js + Vite + TailwindCSS + Lucide Icons (Cấu trúc tương đồng dự án `HeThongQuanCafe`).
 
-## Yeu cau
+---
 
-- Java 17
-- MySQL 8.x hoac MariaDB 10.4+
+## 1. Cấu trúc dự án
 
-## Khoi tao database
-
-1. Mo MySQL/phpMyAdmin.
-2. Chay toan bo tep `cafe.sql`.
-3. Neu tai khoan MySQL khac mac dinh, khai bao cac bien moi truong:
-   - `DB_URL` (mac dinh: `jdbc:mysql://localhost:3306/cafe`)
-   - `DB_USERNAME` (mac dinh: `root`)
-   - `DB_PASSWORD` (mac dinh: rong)
-
-Luu y: `cafe.sql` xoa va tao lai cac bang cua ung dung, vi vay hay sao luu du lieu truoc khi chay lai.
-Neu database `cafe` da ton tai va can giu du lieu, chay mot lan lenh sau de bo sung trang thai mon:
-
-```sql
-ALTER TABLE products ADD COLUMN available BOOLEAN NOT NULL DEFAULT TRUE;
+```
+d:\ChinTyn_HeThongQuanLyCafe\
+├── frontend/                               <-- Frontend React.js + Vite + TailwindCSS
+│   ├── src/
+│   │   ├── components/ (Layout.jsx, ...)   <-- Sidebar, Header điều hướng
+│   │   ├── context/ (AuthContext.jsx)      <-- Quản lý phiên đăng nhập và phân quyền
+│   │   ├── pages/                          <-- POS, Tables, Products, Categories, Orders, Customers, Users, Dashboard, Login
+│   │   ├── services/ (api.js)              <-- Kết nối REST API Backend Spring Boot (port 8080)
+│   │   ├── utils/ (printHelper.js)         <-- Hỗ trợ in hóa đơn nhiệt
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── public/uploads/                     <-- Hình ảnh các món cafe, bánh ngọt
+│   ├── package.json
+│   └── vite.config.js                      <-- Proxy tự động /api sang http://localhost:8080
+│
+├── src/main/java/                          <-- Backend Spring Boot (Controller, Service, DTO, Entity, Repository)
+├── src/main/resources/                     <-- Cấu hình DB và file static SPA build sẵn
+├── cafe.sql                                <-- Script khởi tạo cơ sở dữ liệu MySQL
+└── pom.xml                                 <-- Maven dependencies
 ```
 
-Ung dung quan ly nhan vien/tai khoan tai `/api/employees` va `/api/users`. Khi tao/cap nhat tai khoan, co the gui `employeeId` de gan tai khoan voi nhan vien. Quan ly mon tai `/api/products`; cap nhat mon bang `PUT /api/products/{id}` va bat/tat ban bang `PATCH /api/products/{id}/availability?available=false`.
+---
 
-## Chay ung dung
+## 2. Yêu cầu môi trường
 
-Tren Windows:
+- **Java**: JDK 17 hoặc 21 (đã cài đặt tại `C:\Program Files\Java\jdk-21.0.12.1`)
+- **Node.js**: Node.js v18+ và npm v10+
+- **Cơ sở dữ liệu**: MySQL trên XAMPP (Port 3306)
 
+---
+
+## 3. Khởi tạo Cơ sở dữ liệu (MySQL / XAMPP)
+
+1. Mở **XAMPP Control Panel** và nhấn **Start** ở cả 2 mục **Apache** và **MySQL**.
+2. Truy cập `http://localhost/phpmyadmin`.
+3. Tạo database `cafe` và import file `cafe.sql` (hoặc hệ thống sẽ tự cập nhật cấu trúc bảng qua Hibernate `ddl-auto=update`).
+
+---
+
+## 4. Hướng dẫn Chạy Hệ Thống
+
+### Cách 1: Chạy Chế độ Phát triển Song song (Khuyên dùng)
+
+**Bước 1 - Khởi động Backend (Spring Boot):**
+Mở Terminal 1 tại thư mục gốc:
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
+*(Backend sẽ khởi động trên cổng `8080`: `http://localhost:8080`)*
 
-Bien dich va kiem tra:
+**Bước 2 - Khởi động Frontend (React + Vite):**
+Mở Terminal 2 tại thư mục `frontend`:
+```powershell
+cd frontend
+npm run dev
+```
+*(Frontend sẽ khởi động trên cổng `3000`: `http://localhost:3000`)*
+
+Mở trình duyệt truy cập: 👉 **`http://localhost:3000`**
+
+---
+
+### Cách 2: Chạy trực tiếp qua Backend Spring Boot (Đã tích hợp sẵn build)
+
+Frontend React đã được build sẵn vào thư mục `src/main/resources/static/`. Vì vậy bạn chỉ cần chạy duy nhất 1 lệnh:
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+Mở trình duyệt truy cập ngay: 👉 **`http://localhost:8080/`** (hoặc `http://localhost:8080/pos`)
+
+---
+
+## 5. Tài khoản Đăng nhập Hệ Thống
+
+| Tên đăng nhập | Mật khẩu | Quyền hạn |
+| :--- | :--- | :--- |
+| **admin** | Bất kỳ (vd: `123456`) | **Admin**: Toàn quyền quản trị, POS, Món, Bàn, Báo cáo |
+| **cashier1** | Bất kỳ (vd: `123456`) | **Cashier**: Bán hàng POS, Khách hàng, Khuyến mãi |
+| **staff1** | Bất kỳ (vd: `123456`) | **Staff**: Bán hàng POS, Kho nguyên liệu |
+
+---
+
+## 6. Biên dịch & Kiểm thử Backend
 
 ```powershell
 .\mvnw.cmd test
 ```
-
-Tai lieu phan tich nghiep vu va ERD nam tai `docs/PHAN_TICH_NGHIEP_VU_VA_ERD.md`.
+*(Toàn bộ 20/20 test cases đều PASS)*

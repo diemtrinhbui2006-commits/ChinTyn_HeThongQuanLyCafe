@@ -1,0 +1,78 @@
+import { formatVND, formatDate } from '../utils/formatters.js';
+
+/**
+ * Module hiển thị & in hóa đơn nhiệt tiêu chuẩn 80mm
+ */
+export function openThermalReceipt(inv, tableName) {
+  const modal = document.getElementById('thermalReceiptModal');
+  const paper = document.getElementById('thermalReceiptPaper');
+  if (!modal || !paper) return;
+
+  const sub = inv.totalAmount || 0;
+  const dis = inv.discountAmount || 0;
+  const fin = inv.finalAmount ?? (sub - dis);
+
+  let rows = '';
+  if (inv.details) {
+    inv.details.forEach(d => {
+      rows += `
+        <tr>
+          <td>${d.productName || 'Món #' + d.productId}</td>
+          <td align="center">${d.quantity}</td>
+          <td align="right">${formatVND(d.totalPrice || (d.price * d.quantity))}</td>
+        </tr>
+      `;
+    });
+  }
+
+  paper.innerHTML = `
+    <h2>☕ CHINTYN COFFEE</h2>
+    <p style="text-align:center; font-size:0.75rem;">Hệ Thống Quản Lý Bán Hàng</p>
+    <div class="divider"></div>
+    <p><strong>HÓA ĐƠN THANH TOÁN</strong></p>
+    <p>Số HĐ: #${inv.id} | Bàn: ${tableName || 'Mang về'}</p>
+    <p>Thời gian: ${formatDate(inv.checkoutTime || new Date())}</p>
+    <div class="divider"></div>
+    <table class="receipt-items-table">
+      <thead>
+        <tr style="border-bottom: 1px solid #000;">
+          <th align="left">Tên món</th>
+          <th align="center">SL</th>
+          <th align="right">Tiền</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="divider"></div>
+    <div style="display:flex; justify-content:space-between;">
+      <span>Tạm tính:</span><span>${formatVND(sub)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between;">
+      <span>Giảm giá:</span><span>- ${formatVND(dis)}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.1rem; margin-top:4px;">
+      <span>TỔNG TIỀN:</span><span>${formatVND(fin)}</span>
+    </div>
+    <div class="divider"></div>
+    <p style="text-align:center; font-size:0.75rem;">Cảm ơn Quý khách & Hẹn gặp lại!</p>
+    <p style="text-align:center; font-size:0.75rem;">WiFi: ChinTynCoffee - Pass: 88888888</p>
+  `;
+
+  modal.classList.add('show');
+}
+
+export function initReceiptModalEvents() {
+  const closeBtn = document.getElementById('btnCloseReceiptModal');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      document.getElementById('thermalReceiptModal').classList.remove('show');
+    });
+  }
+
+  const printBtn = document.getElementById('btnPrintReceiptBtn');
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+}
