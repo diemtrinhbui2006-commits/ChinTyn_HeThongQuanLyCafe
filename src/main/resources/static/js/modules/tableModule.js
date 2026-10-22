@@ -23,7 +23,7 @@ export async function loadTablesAdmin() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>#${t.id}</strong></td>
-        <td>${t.name}</td>
+        <td><strong>Bàn ${t.tableNumber || t.id}</strong> <span style="color:#64748b; font-size:0.8rem;">(${t.capacity || 4} chỗ)</span></td>
         <td><span class="badge-tag ${isOccupied ? 'occupied' : 'active'}">${isOccupied ? 'Đang dùng' : 'Trống'}</span></td>
         <td><button class="btn-action-sm danger btn-delete-table" data-id="${t.id}">Xóa</button></td>
       `;
@@ -33,7 +33,7 @@ export async function loadTablesAdmin() {
     tbody.querySelectorAll('.btn-delete-table').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id;
-        if (!confirm('Bạn có chắc muốn xóa bàn này?')) return;
+        if (!confirm('Bạn có chắc muốn xóa bàn này khỏi CSDL?')) return;
         try {
           await tableApi.delete(id);
           showToast('Đã xóa bàn thành công', 'success');
@@ -53,15 +53,21 @@ export function initTableAdminEvents() {
   const input = document.getElementById('addTableNameInput');
   if (addBtn && input) {
     addBtn.addEventListener('click', async () => {
-      const name = input.value.trim();
-      if (!name) {
-        showToast('Vui lòng nhập tên bàn!', 'warning');
+      const raw = input.value.trim();
+      if (!raw) {
+        showToast('Vui lòng nhập số bàn (ví dụ: 11 hoặc Bàn 11)!', 'warning');
+        return;
+      }
+      const numMatch = raw.match(/\d+/);
+      const tableNumber = numMatch ? parseInt(numMatch[0]) : parseInt(raw);
+      if (!tableNumber || isNaN(tableNumber) || tableNumber <= 0) {
+        showToast('Số bàn phải là số nguyên lớn hơn 0!', 'warning');
         return;
       }
       try {
-        await tableApi.create({ name, status: 'AVAILABLE' });
+        await tableApi.create({ tableNumber, capacity: 4, status: 'AVAILABLE' });
         input.value = '';
-        showToast('Đã thêm bàn mới!', 'success');
+        showToast(`Đã thêm Bàn ${tableNumber} vào CSDL thành công!`, 'success');
         loadTablesAdmin();
       } catch (err) {
         showToast('Lỗi thêm bàn: ' + err.message, 'error');

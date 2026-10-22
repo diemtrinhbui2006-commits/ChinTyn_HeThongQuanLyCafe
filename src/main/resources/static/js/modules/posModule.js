@@ -35,7 +35,10 @@ export async function loadPosData() {
       categoryApi.getAll(),
     ]);
 
-    posState.tables = tables || [];
+    posState.tables = (tables || []).map(t => ({
+      ...t,
+      name: t.name || `Bàn ${t.tableNumber || t.id}`,
+    }));
     posState.products = products || [];
     posState.categories = categories || [];
 
