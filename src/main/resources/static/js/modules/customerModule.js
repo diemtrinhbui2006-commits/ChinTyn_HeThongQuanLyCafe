@@ -14,7 +14,7 @@ export async function loadCustomersAdmin() {
     tbody.innerHTML = '';
 
     if (!list || list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" align="center">Chưa có khách hàng nào</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" align="center">Chưa có khách hàng nào</td></tr>';
       return;
     }
 
@@ -22,15 +22,16 @@ export async function loadCustomersAdmin() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>#${c.id}</strong></td>
-        <td>${c.name}</td>
+        <td><strong>${c.name}</strong></td>
         <td>${c.phone || '--'}</td>
         <td>${c.email || '--'}</td>
+        <td style="font-size:0.85rem; color:#64748b;">${c.address || '--'}</td>
         <td><span class="badge-tag active">Thành viên</span></td>
       `;
       tbody.appendChild(tr);
     });
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:red;">Lỗi: ${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="color:red;">Lỗi: ${err.message}</td></tr>`;
   }
 }
 

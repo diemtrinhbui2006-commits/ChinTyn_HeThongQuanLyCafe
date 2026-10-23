@@ -2,6 +2,7 @@ import { tableApi } from '../api/tableApi.js';
 import { productApi } from '../api/productApi.js';
 import { categoryApi } from '../api/categoryApi.js';
 import { invoiceApi } from '../api/invoiceApi.js';
+import { getCurrentUser } from './authModule.js';
 import { formatVND } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
 import { getProductImage } from '../utils/imageMatcher.js';
@@ -37,7 +38,11 @@ export async function loadPosData() {
 
     posState.tables = (tables || []).map(t => ({
       ...t,
+<<<<<<< HEAD
       displayName: t.name || ('Bàn ' + (t.tableNumber ?? t.id)),
+=======
+      name: t.name || `Bàn ${t.tableNumber || t.id}`,
+>>>>>>> main
     }));
     posState.products = products || [];
     posState.categories = categories || [];
@@ -287,7 +292,11 @@ async function addFood(product) {
 
     const payload = {
       tableId: posState.selectedTable.id,
+<<<<<<< HEAD
       employeeId: employeeId,
+=======
+      employeeId: getCurrentUser().employeeId,
+>>>>>>> main
       productId: product.id,
       quantity: 1,
     };
@@ -357,12 +366,16 @@ async function changeItemQty(productId, delta) {
 
     let updated;
     if (delta > 0) {
+<<<<<<< HEAD
       updated = await invoiceApi.orderFood({
         tableId: posState.selectedTable.id,
         employeeId: employeeId,
         productId: productId,
         quantity: 1,
       });
+=======
+      await invoiceApi.orderFood({ tableId: posState.selectedTable.id, employeeId: getCurrentUser().employeeId, productId, quantity: 1 });
+>>>>>>> main
     } else {
       updated = await invoiceApi.removeFood(inv.id, productId, 1);
     }

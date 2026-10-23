@@ -367,6 +367,7 @@
                   <th>Họ và tên</th>
                   <th>Số điện thoại</th>
                   <th>Email</th>
+                  <th>Địa chỉ</th>
                   <th>Hạng</th>
                 </tr>
               </thead>
@@ -381,15 +382,17 @@
         <div class="admin-container">
           <div class="data-card">
             <div class="data-card-header">
-              <h3>Danh Sách Tài Khoản Nhân Viên</h3>
+              <h3>Danh Sách Tài Khoản & Nhân Viên (CSDL)</h3>
             </div>
             <table class="data-table">
               <thead>
                 <tr>
                   <th>Mã User</th>
                   <th>Tên đăng nhập</th>
+                  <th>Họ và tên nhân sự</th>
+                  <th>Chức vụ</th>
+                  <th>Liên hệ (SĐT / Email)</th>
                   <th>Quyền hạn</th>
-                  <th>Hồ sơ nhân viên</th>
                 </tr>
               </thead>
               <tbody id="usersAdminBody"></tbody>
@@ -501,24 +504,15 @@
       <div class="login-body">
         <div class="form-field">
           <label>Tên đăng nhập:</label>
-          <input type="text" id="loginUsername" placeholder="Nhập tên tài khoản (admin, cashier, staff)..." autocomplete="off" value="admin">
+          <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập" autocomplete="username">
         </div>
         <div class="form-field">
           <label>Mật khẩu:</label>
-          <input type="password" id="loginPassword" placeholder="Nhập mật khẩu (123456)..." value="123456">
+          <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" autocomplete="current-password">
         </div>
         <button class="btn-primary" id="btnSubmitLogin" style="padding:10px; font-size:0.95rem; margin-top:4px;">
           🚀 Đăng Nhập Hệ Thống
         </button>
-
-        <div class="quick-roles">
-          <div class="quick-roles-title">⚡ Chọn nhanh tài khoản demo (Mật khẩu: 123456):</div>
-          <div class="quick-role-btns">
-            <button class="btn-quick-role" data-user="admin" data-name="Nguyễn Quản Trị" data-role="ADMIN" data-avatar="QT">👑 Admin</button>
-            <button class="btn-quick-role" data-user="cashier" data-name="Trần Thu Ngân" data-role="CASHIER" data-avatar="TN">💼 Thu ngân</button>
-            <button class="btn-quick-role" data-user="staff" data-name="Lê Phục Vụ" data-role="STAFF" data-avatar="PV">☕ Phục vụ</button>
-          </div>
-        </div>
       </div>
     </div>
   </div>

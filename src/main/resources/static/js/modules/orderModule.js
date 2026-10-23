@@ -25,9 +25,9 @@ export async function loadOrdersHistory() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>#${inv.id}</strong></td>
-        <td>Bàn ${inv.tableId || '--'}</td>
-        <td>${formatDate(inv.createdAt || inv.checkoutTime)}</td>
-        <td style="font-weight:700;">${formatVND(inv.finalAmount || inv.totalAmount)}</td>
+        <td>Bàn ${inv.tableNumber || inv.tableId || '--'}</td>
+        <td>${formatDate(inv.paidAt || inv.createdAt)}</td>
+        <td style="font-weight:700;">${formatVND(inv.totalAmount || inv.finalAmount)}</td>
         <td><span class="badge-tag ${isPaid ? 'paid' : (inv.status === 'CANCELLED' ? 'cancelled' : 'pending')}">${inv.status}</span></td>
         <td><button class="btn-action-sm btn-view-invoice" data-id="${inv.id}">Xem & In</button></td>
       `;
