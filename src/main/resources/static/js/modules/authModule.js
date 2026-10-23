@@ -2,10 +2,10 @@ import { showToast } from '../utils/toast.js';
 
 const USER_STORAGE_KEY = 'chintyn_current_user';
 
-const ROLE_PROFILES = {
-  admin: { username: 'admin', name: 'Nguyễn Quản Trị', role: 'ADMIN', avatar: 'QT' },
-  cashier: { username: 'cashier', name: 'Trần Thu Ngân', role: 'CASHIER', avatar: 'TN' },
-  staff: { username: 'staff', name: 'Lê Phục Vụ', role: 'STAFF', avatar: 'PV' },
+export const ROLE_PROFILES = {
+  admin: { username: 'admin', name: 'Nguyễn Quản Trị', role: 'ADMIN', avatar: 'QT', employeeId: 1 },
+  cashier: { username: 'cashier', name: 'Trần Thu Ngân', role: 'CASHIER', avatar: 'TN', employeeId: 2 },
+  staff: { username: 'staff', name: 'Lê Phục Vụ', role: 'STAFF', avatar: 'PV', employeeId: 3 },
 };
 
 /**
@@ -14,7 +14,13 @@ const ROLE_PROFILES = {
 export function getCurrentUser() {
   try {
     const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.employeeId) {
+        parsed.employeeId = ROLE_PROFILES[parsed.username]?.employeeId || 1;
+      }
+      return parsed;
+    }
   } catch (e) {
     // fallback
   }
@@ -65,7 +71,7 @@ export function handleLogout() {
   showToast('Đã đăng xuất khỏi tài khoản thành công!', 'warning');
 
   // Cập nhật lại UI tạm thời và hiện form đăng nhập
-  updateSidebarUserUI({ username: 'Chưa đăng nhập', name: 'Vui lòng đăng nhập', role: 'GUEST', avatar: '?' });
+  updateSidebarUserUI({ username: 'Chưa đăng nhập', name: 'Vui lòng đăng nhập', role: 'GUEST', avatar: '?', employeeId: 1 });
   showLoginModal();
 }
 
@@ -119,6 +125,7 @@ export function initAuthEvents() {
           name: username.toUpperCase(),
           role: 'STAFF',
           avatar: username.substring(0, 2).toUpperCase(),
+          employeeId: 1,
         };
       }
 

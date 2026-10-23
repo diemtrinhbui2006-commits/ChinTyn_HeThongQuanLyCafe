@@ -6,6 +6,7 @@ import { formatVND } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
 import { getProductImage } from '../utils/imageMatcher.js';
 import { openThermalReceipt } from './receiptModal.js';
+import { getCurrentUser } from './authModule.js';
 
 // State nội bộ của POS
 export const posState = {
@@ -34,7 +35,10 @@ export async function loadPosData() {
       categoryApi.getAll(),
     ]);
 
-    posState.tables = tables || [];
+    posState.tables = (tables || []).map(t => ({
+      ...t,
+      displayName: t.name || ('Bàn ' + (t.tableNumber ?? t.id)),
+    }));
     posState.products = products || [];
     posState.categories = categories || [];
 
@@ -44,7 +48,9 @@ export async function loadPosData() {
 
     if (posState.selectedTable) {
       const refreshed = posState.tables.find(t => t.id === posState.selectedTable.id);
-      if (refreshed) selectTable(refreshed);
+      if (refreshed) {
+        posState.selectedTable = refreshed;
+      }
     }
   } catch (err) {
     showToast('Lỗi tải dữ liệu POS: ' + err.message, 'error');
@@ -109,16 +115,17 @@ export function renderTables() {
   filtered.forEach(table => {
     const isOccupied = table.status === 'OCCUPIED';
     const isSelected = posState.selectedTable && posState.selectedTable.id === table.id;
+    const tableName = table.displayName || table.name || ('Bàn ' + (table.tableNumber ?? table.id));
 
     const box = document.createElement('div');
     box.className = `table-box ${isOccupied ? 'occupied' : 'available'} ${isSelected ? 'selected' : ''}`;
     box.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:start;">
-        <span class="table-title">${table.name}</span>
+        <span class="table-title">${tableName}</span>
         <span class="table-badge">${isOccupied ? 'Có khách' : 'Trống'}</span>
       </div>
       <div class="table-seats">
-        <span>👥 ${table.seats ?? table.capacity ?? 4} chỗ</span>
+        <span>👥 ${table.capacity ?? table.seats ?? 4} chỗ</span>
       </div>
     `;
 
@@ -132,16 +139,24 @@ export async function selectTable(table) {
   posState.selectedTable = table;
   renderTables();
 
+  const tableName = table.displayName || table.name || ('Bàn ' + (table.tableNumber ?? table.id));
   const titleEl = document.getElementById('posActiveTableTitle');
   if (titleEl) {
-    titleEl.textContent = `${table.name} (${table.status === 'OCCUPIED' ? 'Đang phục vụ' : 'Bàn trống'})`;
+    titleEl.textContent = `${tableName} (${table.status === 'OCCUPIED' ? 'Đang phục vụ' : 'Bàn trống'})`;
   }
 
-  try {
-    const inv = await invoiceApi.getOpenByTable(table.id);
-    posState.activeInvoice = inv;
-    renderInvoiceCart();
-  } catch (e) {
+  // Nếu bàn đang phục vụ thì lấy hóa đơn hiện tại
+  if (table.status === 'OCCUPIED') {
+    try {
+      const inv = await invoiceApi.getOpenByTable(table.id);
+      posState.activeInvoice = inv;
+      renderInvoiceCart();
+    } catch (e) {
+      posState.activeInvoice = null;
+      renderInvoiceCart();
+    }
+  } else {
+    // Bàn trống thì dọn sạch giỏ
     posState.activeInvoice = null;
     renderInvoiceCart();
   }
@@ -259,7 +274,7 @@ export function renderProducts() {
   }
 }
 
-// 4. Thêm món vào bàn
+// 4. Thêm món vào bàn (Gọi món)
 async function addFood(product) {
   if (!posState.selectedTable) {
     showToast('Vui lòng chọn một bàn trước khi gọi món!', 'warning');
@@ -267,17 +282,31 @@ async function addFood(product) {
   }
 
   try {
+    const user = getCurrentUser();
+    const employeeId = user?.employeeId || 1;
+
     const payload = {
       tableId: posState.selectedTable.id,
+      employeeId: employeeId,
       productId: product.id,
       quantity: 1,
     };
+
     const updated = await invoiceApi.orderFood(payload);
     posState.activeInvoice = updated;
-    showToast(`Đã thêm "${product.name}" vào ${posState.selectedTable.name}`, 'success');
 
-    await loadPosData();
+    const tableName = posState.selectedTable.displayName || posState.selectedTable.name || ('Bàn ' + (posState.selectedTable.tableNumber ?? posState.selectedTable.id));
+    showToast(`Đã thêm "${product.name}" vào ${tableName}`, 'success');
+
+    // Chuyển bàn sang trạng thái có khách
+    posState.selectedTable.status = 'OCCUPIED';
+    const titleEl = document.getElementById('posActiveTableTitle');
+    if (titleEl) {
+      titleEl.textContent = `${tableName} (Đang phục vụ)`;
+    }
+
     renderInvoiceCart();
+    await loadPosData();
   } catch (err) {
     showToast('Lỗi khi thêm món: ' + err.message, 'error');
   }
@@ -320,16 +349,30 @@ export function renderInvoiceCart() {
 // Cập nhật số lượng món
 async function changeItemQty(productId, delta) {
   const inv = posState.activeInvoice;
-  if (!inv) return;
+  if (!inv || !posState.selectedTable) return;
 
   try {
+    const user = getCurrentUser();
+    const employeeId = user?.employeeId || inv.employeeId || 1;
+
+    let updated;
     if (delta > 0) {
-      await invoiceApi.orderFood({ tableId: posState.selectedTable.id, productId, quantity: 1 });
+      updated = await invoiceApi.orderFood({
+        tableId: posState.selectedTable.id,
+        employeeId: employeeId,
+        productId: productId,
+        quantity: 1,
+      });
     } else {
-      await invoiceApi.removeFood(inv.id, productId, 1);
+      updated = await invoiceApi.removeFood(inv.id, productId, 1);
     }
-    const updated = await invoiceApi.getOpenByTable(posState.selectedTable.id);
-    posState.activeInvoice = updated;
+
+    if (updated) {
+      posState.activeInvoice = updated;
+    } else {
+      posState.activeInvoice = await invoiceApi.getOpenByTable(posState.selectedTable.id).catch(() => null);
+    }
+
     renderInvoiceCart();
     await loadPosData();
   } catch (err) {
@@ -403,18 +446,27 @@ async function handleCheckout() {
     return;
   }
 
-  const confirmed = confirm(`Xác nhận thanh toán cho ${posState.selectedTable.name} với số tiền ${formatVND(inv.totalAmount)}?`);
+  const tableName = posState.selectedTable?.displayName || posState.selectedTable?.name || ('Bàn #' + (posState.selectedTable?.tableNumber ?? inv.tableId));
+  const confirmed = confirm(`Xác nhận thanh toán cho ${tableName} với số tiền ${formatVND(inv.totalAmount)}?`);
   if (!confirmed) return;
 
   try {
     const checkoutResult = await invoiceApi.checkout(inv.id, { paymentMethod: 'CASH' });
-    showToast(`Thanh toán thành công ${posState.selectedTable.name}!`, 'success');
+    showToast(`Thanh toán thành công ${tableName}!`, 'success');
 
     // Mở popup in hóa đơn nhiệt 80mm
-    openThermalReceipt(checkoutResult || inv, posState.selectedTable.name);
+    openThermalReceipt(checkoutResult || inv, tableName);
 
     // Reset bàn về trạng thái trống
     posState.activeInvoice = null;
+    if (posState.selectedTable) {
+      posState.selectedTable.status = 'AVAILABLE';
+      const titleEl = document.getElementById('posActiveTableTitle');
+      if (titleEl) {
+        titleEl.textContent = `${tableName} (Bàn trống)`;
+      }
+    }
+
     await loadPosData();
     renderInvoiceCart();
   } catch (err) {
@@ -430,14 +482,23 @@ async function handleCancelTable() {
     return;
   }
 
-  const confirmed = confirm(`CẢNH BÁO: Bạn có chắc chắn muốn HỦY TOÀN BỘ đơn hàng của ${posState.selectedTable.name}?`);
+  const tableName = posState.selectedTable?.displayName || posState.selectedTable?.name || ('Bàn #' + (posState.selectedTable?.tableNumber ?? inv.tableId));
+  const confirmed = confirm(`CẢNH BÁO: Bạn có chắc chắn muốn HỦY TOÀN BỘ đơn hàng của ${tableName}?`);
   if (!confirmed) return;
 
   try {
     await invoiceApi.cancel(inv.id);
-    showToast(`Đã hủy hóa đơn ${posState.selectedTable.name}`, 'warning');
+    showToast(`Đã hủy hóa đơn ${tableName}`, 'warning');
 
     posState.activeInvoice = null;
+    if (posState.selectedTable) {
+      posState.selectedTable.status = 'AVAILABLE';
+      const titleEl = document.getElementById('posActiveTableTitle');
+      if (titleEl) {
+        titleEl.textContent = `${tableName} (Bàn trống)`;
+      }
+    }
+
     await loadPosData();
     renderInvoiceCart();
   } catch (err) {
