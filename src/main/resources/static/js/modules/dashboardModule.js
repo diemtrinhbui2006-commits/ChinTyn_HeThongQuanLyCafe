@@ -16,7 +16,7 @@ export async function loadDashboard() {
 
     // 1. Tính toán 4 chỉ số KPI
     const paidInvoices = invoices.filter(i => i.status === 'PAID');
-    const totalRev = paidInvoices.reduce((sum, i) => sum + (i.finalAmount || i.totalAmount || 0), 0);
+    const totalRev = paidInvoices.reduce((sum, i) => sum + (i.totalAmount || i.finalAmount || 0), 0);
     const activeTables = tables.filter(t => t.status === 'OCCUPIED').length;
 
     const revEl = document.getElementById('kpiRevenueToday');
@@ -29,26 +29,29 @@ export async function loadDashboard() {
     if (tablesEl) tablesEl.textContent = `${activeTables} / ${tables.length}`;
     if (prodEl) prodEl.textContent = products.length;
 
-    // 2. Render bảng đơn hàng gần nhất
+    // 2. Render bảng đơn hàng gần nhất (sắp xếp mới nhất lên trước)
     const tbody = document.getElementById('dashboardRecentOrdersBody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const recent = [...invoices].slice(0, 6);
+    const recent = [...invoices].sort((a, b) => b.id - a.id).slice(0, 6);
     if (recent.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" align="center" style="color:#94a3b8;">Chưa có đơn hàng nào</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" align="center" style="color:#94a3b8; padding:16px;">Chưa có đơn hàng nào</td></tr>';
       return;
     }
 
     recent.forEach(inv => {
       const isPaid = inv.status === 'PAID';
+      const isCancelled = inv.status === 'CANCELLED';
+      const statusText = isPaid ? 'Đã thanh toán' : (isCancelled ? 'Đã hủy' : 'Đang phục vụ');
+      const statusClass = isPaid ? 'paid' : (isCancelled ? 'cancelled' : 'pending');
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>#${inv.id}</strong></td>
         <td>Bàn ${inv.tableNumber || inv.tableId || '--'}</td>
-        <td>${formatDate(inv.createdAt || inv.paidAt || inv.checkoutTime)}</td>
-        <td style="font-weight:700;">${formatVND(inv.totalAmount || inv.finalAmount)}</td>
-        <td><span class="badge-tag ${isPaid ? 'paid' : 'pending'}">${inv.status}</span></td>
+        <td>${formatDate(inv.paidAt || inv.createdAt)}</td>
+        <td style="font-weight:700; color:#d97706;">${formatVND(inv.totalAmount || inv.finalAmount)}</td>
+        <td><span class="badge-tag ${statusClass}">${statusText}</span></td>
       `;
       tbody.appendChild(tr);
     });

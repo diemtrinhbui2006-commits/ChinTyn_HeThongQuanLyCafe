@@ -2,6 +2,8 @@
  * API Client - Hàm gọi HTTP chung (fetch)
  */
 
+let inMemoryCsrfToken = null;
+
 function readCookie(name) {
   const prefix = `${name}=`;
   const entry = document.cookie.split('; ').find(cookie => cookie.startsWith(prefix));
@@ -14,7 +16,7 @@ export async function request(endpoint, options = {}) {
     'Content-Type': 'application/json',
     ...options.headers,
   });
-  const csrfToken = readCookie('XSRF-TOKEN');
+  const csrfToken = readCookie('XSRF-TOKEN') || inMemoryCsrfToken;
   if (csrfToken && !['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method)) {
     headers.set('X-XSRF-TOKEN', csrfToken);
   }
@@ -28,6 +30,10 @@ export async function request(endpoint, options = {}) {
     });
     if (res.status === 204) return null;
     const data = await res.json().catch(() => null);
+
+    if (data && data.token && data.parameterName === '_csrf') {
+      inMemoryCsrfToken = data.token;
+    }
 
     if (!res.ok) {
       const err = data?.message || data?.error || `Lỗi HTTP ${res.status}: ${res.statusText}`;

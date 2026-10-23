@@ -30,3 +30,52 @@
 .receipt-items-table td {
   padding: 4px 0;
 }
+
+/* ==================== IN HÓA ĐƠN NHIỆT (PRINT STYLES) ==================== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #thermalReceiptModal,
+  #thermalReceiptModal * {
+    visibility: visible;
+  }
+  #thermalReceiptModal {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #fff !important;
+    display: flex !important;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    z-index: 99999;
+  }
+  #thermalReceiptModal .modal-window {
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+  }
+  #thermalReceiptModal .modal-head,
+  #thermalReceiptModal .modal-foot {
+    display: none !important;
+  }
+  #thermalReceiptModal .modal-body {
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  .receipt-paper-view {
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    padding: 5mm !important;
+    margin: 0 !important;
+  }
+}

@@ -419,9 +419,29 @@
 
 .checkout-btn-group {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1.2fr 1.8fr;
   gap: 8px;
   margin-top: 4px;
+}
+
+.btn-print-temp {
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 6px;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.2s;
+}
+
+.btn-print-temp:hover {
+  background: #0369a1;
 }
 
 .btn-pay-now {

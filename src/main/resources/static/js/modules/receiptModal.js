@@ -6,32 +6,39 @@ import { formatVND, formatDate } from '../utils/formatters.js';
 export function openThermalReceipt(inv, tableName) {
   const modal = document.getElementById('thermalReceiptModal');
   const paper = document.getElementById('thermalReceiptPaper');
-  if (!modal || !paper) return;
+  if (!modal || !paper || !inv) return;
 
-  const sub = inv.totalAmount || 0;
-  const dis = inv.discountAmount || 0;
-  const fin = inv.finalAmount ?? (sub - dis);
+  const sub = inv.subtotal != null ? inv.subtotal : (inv.totalAmount || 0);
+  const dis = inv.discount != null ? inv.discount : (inv.discountAmount || 0);
+  const fin = inv.totalAmount != null ? inv.totalAmount : (inv.finalAmount != null ? inv.finalAmount : (sub - dis));
+  const timeVal = inv.paidAt || inv.createdAt || inv.checkoutTime || new Date();
 
   let rows = '';
-  if (inv.details) {
+  if (inv.details && inv.details.length > 0) {
     inv.details.forEach(d => {
+      const lineTotal = d.lineTotal != null ? d.lineTotal : (d.totalPrice != null ? d.totalPrice : ((d.unitPrice || d.price || 0) * (d.quantity || 1)));
       rows += `
         <tr>
-          <td>${d.productName || 'Món #' + d.productId}</td>
-          <td align="center">${d.quantity}</td>
-          <td align="right">${formatVND(d.totalPrice || (d.price * d.quantity))}</td>
+          <td>${d.productName || 'Món #' + (d.productId || d.id || '')}</td>
+          <td align="center">${d.quantity || 1}</td>
+          <td align="right">${formatVND(lineTotal)}</td>
         </tr>
       `;
     });
+  } else {
+    rows = '<tr><td colspan="3" align="center" style="color:#64748b; padding:8px 0;">(Chưa có món nào)</td></tr>';
   }
+
+  const invoiceNumber = inv.id ? `#${inv.id}` : '#MỚI';
+  const displayTable = tableName || (inv.tableNumber ? `Bàn ${inv.tableNumber}` : (inv.tableId ? `Bàn ${inv.tableId}` : 'Mang về'));
 
   paper.innerHTML = `
     <h2>☕ CHINTYN COFFEE</h2>
     <p style="text-align:center; font-size:0.75rem;">Hệ Thống Quản Lý Bán Hàng</p>
     <div class="divider"></div>
     <p><strong>HÓA ĐƠN THANH TOÁN</strong></p>
-    <p>Số HĐ: #${inv.id} | Bàn: ${tableName || 'Mang về'}</p>
-    <p>Thời gian: ${formatDate(inv.checkoutTime || new Date())}</p>
+    <p>Số HĐ: ${invoiceNumber} | ${displayTable}</p>
+    <p>Thời gian: ${formatDate(timeVal)}</p>
     <div class="divider"></div>
     <table class="receipt-items-table">
       <thead>

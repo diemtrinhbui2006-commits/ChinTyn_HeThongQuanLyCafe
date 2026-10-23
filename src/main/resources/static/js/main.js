@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTableAdminEvents();
   initCategoryAdminEvents();
   initCustomerAdminEvents();
-
 });
 
 // Đồng hồ thời gian thực
@@ -92,8 +91,19 @@ function initGlobalRefresh() {
   const refreshBtn = document.getElementById('btnRefreshAll');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', async () => {
-      await loadPosData();
+      const activeNav = document.querySelector('.nav-item.active')?.dataset.page;
+      if (activeNav === 'orders') await loadOrdersHistory();
+      else if (activeNav === 'dashboard') await loadDashboard();
+      else await loadPosData();
       showToast('Đã làm mới dữ liệu hệ thống!', 'success');
+    });
+  }
+
+  const btnRefreshOrders = document.getElementById('btnRefreshOrdersList');
+  if (btnRefreshOrders) {
+    btnRefreshOrders.addEventListener('click', async () => {
+      await loadOrdersHistory();
+      showToast('Đã cập nhật danh sách đơn hàng mới nhất!', 'success');
     });
   }
 }
