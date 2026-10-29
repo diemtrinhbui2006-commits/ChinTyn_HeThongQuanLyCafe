@@ -97,4 +97,20 @@ Mở trình duyệt truy cập ngay: 👉 **`http://localhost:8080/`** (hoặc `
 ```powershell
 .\mvnw.cmd test
 ```
-*(Toàn bộ 20/20 test cases đều PASS)*
+*(Bộ kiểm thử bao gồm xác nhận khuyến mãi/điểm thưởng, luồng duyệt QR và bảo vệ API.)*
+
+---
+
+## 7. Vận hành nâng cao
+
+Trang **Vận hành nâng cao** cung cấp quản lý nguyên liệu và cảnh báo tồn thấp, đặt/hủy bàn,
+mở/đóng ca, đối soát tiền mặt, nhà cung cấp, chi phí/nhập kho, mã khuyến mãi, phần thưởng
+đổi điểm và hàng chờ gọi món QR. Các bản ghi được lưu bằng JPA; Hibernate cập nhật schema
+theo cấu hình hiện tại.
+
+- Ca tiền mặt dự kiến = tiền đầu ca + hóa đơn tiền mặt đã thanh toán trong ca − chi phí tiền mặt trong ca.
+- Khách nhận 1 điểm cho mỗi 10.000 ₫ đã thanh toán; điểm và lịch sử chỉ được ghi nhận sau khi checkout thành công.
+- Mã khuyến mãi quản lý được qua `/api/promotions` và được kiểm tra khi áp dụng vào checkout.
+- Nhân viên tạo và hiển thị mã QR PNG tại bàn từ trang vận hành. Khách dùng liên kết `/guest-order.html?token=...`
+  để xem menu/gửi yêu cầu. Yêu cầu chỉ nằm trong hàng chờ `/api/qr/orders/pending`; nhân viên phải
+  duyệt mới thêm món vào hóa đơn đang mở. Token dùng 256 bit ngẫu nhiên; API duyệt yêu cầu cần đăng nhập.

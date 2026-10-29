@@ -26,7 +26,7 @@ export async function loadCustomersAdmin() {
         <td>${c.phone || '--'}</td>
         <td>${c.email || '--'}</td>
         <td style="font-size:0.85rem; color:#64748b;">${c.address || '--'}</td>
-        <td><span class="badge-tag active">Thành viên</span></td>
+        <td><span class="badge-tag active">${Number(c.loyaltyPoints || 0)} điểm</span></td>
       `;
       tbody.appendChild(tr);
     });

@@ -22,6 +22,8 @@ export const posState = {
   productPageSize: 8,
 };
 
+let cashDueTotal = null;
+
 export async function initPosModule() {
   bindPosEvents();
   await loadPosData();
@@ -79,9 +81,37 @@ function bindPosEvents() {
     });
   });
 
-  // Tính tiền thừa khi khách đưa tiền
-  const cashInput = document.getElementById('cashReceivedInput');
+  // Trừ mệnh giá khỏi số tiền còn phải trả
+  const cashInput = document.getElementById('cashRemainingInput');
   if (cashInput) cashInput.addEventListener('input', calculateChange);
+
+  document.querySelectorAll('[data-cash-deduct]').forEach(button => {
+    button.addEventListener('click', () => {
+      if (!cashInput) return;
+      const currentDue = Number(cashInput.value) || 0;
+      const denomination = Number(button.dataset.cashDeduct);
+      cashInput.value = String(currentDue - denomination);
+      calculateChange();
+    });
+  });
+
+  const exactCashButton = document.getElementById('btnCashExact');
+  if (exactCashButton) {
+    exactCashButton.addEventListener('click', () => {
+      if (!cashInput) return;
+      cashInput.value = '0';
+      calculateChange();
+    });
+  }
+
+  const clearCashButton = document.getElementById('btnClearCash');
+  if (clearCashButton) {
+    clearCashButton.addEventListener('click', () => {
+      if (!cashInput) return;
+      cashInput.value = String(posState.activeInvoice?.totalAmount || 0);
+      calculateChange();
+    });
+  }
 
   // Áp dụng chiết khấu
   const discountBtn = document.getElementById('btnApplyDiscount');
@@ -152,6 +182,8 @@ export function renderTables() {
 // Chọn bàn
 export async function selectTable(table) {
   posState.selectedTable = table;
+  const cashInput = document.getElementById('cashRemainingInput');
+  if (cashInput) cashInput.value = '';
   renderTables();
 
   const tableName = table.displayName || table.name || ('Bàn ' + (table.tableNumber ?? table.id));
@@ -404,27 +436,38 @@ function updateTotalsUI(subtotal, discount, total) {
   if (disEl) disEl.textContent = formatVND(discount);
   if (totEl) totEl.textContent = formatVND(total);
 
+  const cashInput = document.getElementById('cashRemainingInput');
+  if (cashInput) {
+    const previousDue = Number(cashInput.value);
+    if (cashInput.value === '' || cashDueTotal === null || !Number.isFinite(previousDue)) {
+      cashInput.value = String(total);
+    } else if (cashDueTotal !== total) {
+      cashInput.value = String(previousDue + total - cashDueTotal);
+    }
+  }
+  cashDueTotal = total;
   calculateChange();
 }
 
 function calculateChange() {
-  const cashInput = document.getElementById('cashReceivedInput');
+  const cashInput = document.getElementById('cashRemainingInput');
   const changeEl = document.getElementById('changeReturnText');
   if (!cashInput || !changeEl) return;
 
-  const total = posState.activeInvoice?.totalAmount || 0;
-  const cash = parseFloat(cashInput.value) || 0;
-  const change = cash - total;
+  const remaining = Number(cashInput.value) || 0;
 
-  if (cash > 0 && change >= 0) {
-    changeEl.textContent = formatVND(change);
+  if (remaining < 0) {
+    changeEl.textContent = formatVND(Math.abs(remaining));
     changeEl.style.color = '#10b981';
-  } else if (cash > 0 && change < 0) {
-    changeEl.textContent = 'Còn thiếu ' + formatVND(Math.abs(change));
+    changeEl.parentElement.firstElementChild.textContent = 'Tiền thối';
+  } else if (remaining > 0) {
+    changeEl.textContent = formatVND(remaining);
     changeEl.style.color = '#ef4444';
+    changeEl.parentElement.firstElementChild.textContent = 'Còn phải trả';
   } else {
     changeEl.textContent = '0 ₫';
     changeEl.style.color = '#10b981';
+    changeEl.parentElement.firstElementChild.textContent = 'Tiền thối';
   }
 }
 
@@ -474,6 +517,8 @@ async function handleCheckout() {
 
     // Reset bàn về trạng thái trống
     posState.activeInvoice = null;
+    const cashInput = document.getElementById('cashRemainingInput');
+    if (cashInput) cashInput.value = '';
     if (posState.selectedTable) {
       posState.selectedTable.status = 'AVAILABLE';
       const titleEl = document.getElementById('posActiveTableTitle');

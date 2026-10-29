@@ -13,7 +13,7 @@ public class CustomerMapper {
         if (request == null) {
             return null;
         }
-        return new Customer(null, request.name(), request.email(), request.phone(), request.address());
+        return new Customer(null, request.name(), request.email(), request.phone(), request.address(), 0);
     }
 
     public CustomerResponse toResponse(Customer customer) {
@@ -22,7 +22,8 @@ public class CustomerMapper {
                 customer.getName(),
                 customer.getEmail(),
                 customer.getPhone(),
-                customer.getAddress()
+                customer.getAddress(),
+                customer.getLoyaltyPoints() == null ? 0 : customer.getLoyaltyPoints()
         );
     }
 }

@@ -1,11 +1,11 @@
 package com.example.BuiThiDiemTrinh_TH5.entity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,4 +32,7 @@ public class Customer {
 
     @Column(length = 255)
     private String address;
+
+    @Column(nullable = false)
+    private Integer loyaltyPoints = 0;
 }

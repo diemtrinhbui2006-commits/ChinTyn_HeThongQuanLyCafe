@@ -68,6 +68,9 @@ public class Invoice {
     @Column(name = "total_amount", nullable = false, precision = 14, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
+    @Column(name = "promotion_code", length = 40)
+    private String promotionCode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private InvoiceStatus status = InvoiceStatus.OPEN;

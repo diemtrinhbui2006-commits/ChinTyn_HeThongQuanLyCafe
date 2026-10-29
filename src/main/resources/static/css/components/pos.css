@@ -400,21 +400,134 @@
 }
 
 .cash-change-calc {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 8px;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border: 1px solid #dbe3ec;
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+}
+
+.cash-payment-heading,
+.cash-input-row,
+.cash-input-controls,
+.cash-change-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cash-payment-heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cash-payment-title {
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.cash-payment-hint {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+.cash-clear-btn {
+  padding: 4px 8px;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.cash-denominations {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cash-denomination-btn {
+  padding: 7px 4px;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cash-denomination-btn:hover {
+  background: #d1fae5;
+  border-color: #6ee7b7;
+}
+
+.cash-input-row {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.cash-input-controls {
+  width: 100%;
 }
 
 .cash-change-calc input {
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 6px;
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 9px 10px;
+  color: var(--text-primary);
+  background: #fff;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+}
+
+.cash-change-calc input:focus {
+  outline: 2px solid rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+}
+
+.cash-exact-btn {
+  align-self: stretch;
+  padding: 0 11px;
+  color: #fff;
+  background: #0f766e;
+  border: 0;
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cash-exact-btn:hover {
+  background: #115e59;
+}
+
+.cash-change-result {
+  padding: 9px 10px;
+  color: #334155;
+  background: #f1f5f9;
+  border-radius: 7px;
+  font-size: 0.8rem;
+}
+
+.cash-change-result strong {
+  color: #047857;
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
 .checkout-btn-group {

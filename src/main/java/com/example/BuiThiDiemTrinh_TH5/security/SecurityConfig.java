@@ -65,11 +65,15 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/**")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/csrf", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/guest/qr/*", "/api/guest/qr/*/orders").permitAll()
                         .requestMatchers("/api/users/**", "/api/employees/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/tables/**").authenticated()
                         .requestMatchers("/api/products/**", "/api/categories/**", "/api/tables/**").hasRole("ADMIN")
                         .requestMatchers("/api/customers/**").hasAnyRole("ADMIN", "CASHIER", "STAFF")
                         .requestMatchers("/api/invoices/**").hasAnyRole("ADMIN", "CASHIER", "STAFF")
+                        .requestMatchers("/api/qr/**", "/api/inventory/**", "/api/reservations/**",
+                                "/api/shifts/**", "/api/suppliers/**", "/api/expenses/**", "/api/promotions/**", "/api/rewards/**")
+                                .hasAnyRole("ADMIN", "CASHIER", "STAFF")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .logout(logout -> logout

@@ -127,4 +127,5 @@ public class InvoiceController {
         Invoice invoice = invoiceService.cancelInvoice(id);
         return invoiceMapper.toResponse(invoice);
     }
+
 }

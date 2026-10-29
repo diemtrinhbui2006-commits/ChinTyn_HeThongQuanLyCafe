@@ -55,6 +55,16 @@ class SecurityIntegrationTest {
     }
 
     @Test
+    void guestQrMenuIsPublicButStaffApprovalIsProtected() throws Exception {
+        mockMvc.perform(get("/api/guest/qr/not-a-token"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/qr/orders/1/approve").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"employeeId\":1}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void loginCreatesServerSessionAndReturnsDatabaseRole() throws Exception {
         MvcResult login = mockMvc.perform(post("/api/auth/login")
                         .with(csrf())

@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.BuiThiDiemTrinh_TH5.dto.ApplyDiscountRequest;
@@ -31,6 +32,10 @@ import com.example.BuiThiDiemTrinh_TH5.repository.CustomerRepository;
 import com.example.BuiThiDiemTrinh_TH5.repository.EmployeeRepository;
 import com.example.BuiThiDiemTrinh_TH5.repository.InvoiceRepository;
 import com.example.BuiThiDiemTrinh_TH5.repository.ProductRepository;
+import com.example.BuiThiDiemTrinh_TH5.repository.PromotionRepository;
+import com.example.BuiThiDiemTrinh_TH5.repository.LoyaltyEntryRepository;
+import com.example.BuiThiDiemTrinh_TH5.entity.Promotion;
+import com.example.BuiThiDiemTrinh_TH5.entity.LoyaltyEntry;
 import com.example.BuiThiDiemTrinh_TH5.service.InvoiceService;
 
 @Service
@@ -41,6 +46,27 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final ProductRepository productRepository;
     private final EmployeeRepository employeeRepository;
     private final CustomerRepository customerRepository;
+    private final PromotionRepository promotionRepository;
+    private final LoyaltyEntryRepository loyaltyEntryRepository;
+
+    @Autowired
+    public InvoiceServiceImpl(
+            InvoiceRepository invoiceRepository,
+            CafeTableRepository cafeTableRepository,
+            ProductRepository productRepository,
+            EmployeeRepository employeeRepository,
+            CustomerRepository customerRepository,
+            PromotionRepository promotionRepository,
+            LoyaltyEntryRepository loyaltyEntryRepository
+    ) {
+        this.invoiceRepository = invoiceRepository;
+        this.cafeTableRepository = cafeTableRepository;
+        this.productRepository = productRepository;
+        this.employeeRepository = employeeRepository;
+        this.customerRepository = customerRepository;
+        this.promotionRepository = promotionRepository;
+        this.loyaltyEntryRepository = loyaltyEntryRepository;
+    }
 
     public InvoiceServiceImpl(
             InvoiceRepository invoiceRepository,
@@ -49,11 +75,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             EmployeeRepository employeeRepository,
             CustomerRepository customerRepository
     ) {
-        this.invoiceRepository = invoiceRepository;
-        this.cafeTableRepository = cafeTableRepository;
-        this.productRepository = productRepository;
-        this.employeeRepository = employeeRepository;
-        this.customerRepository = customerRepository;
+        this(invoiceRepository, cafeTableRepository, productRepository, employeeRepository, customerRepository, null, null);
     }
 
     @Override
@@ -251,6 +273,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         } else {
             recalculateInvoiceAmounts(invoice);
         }
+        validatePromotionAtCheckout(invoice);
 
         PaymentMethod paymentMethod = (request != null && request.paymentMethod() != null)
                 ? request.paymentMethod()
@@ -259,6 +282,13 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setPaymentMethod(paymentMethod);
         invoice.setPaidAt(LocalDateTime.now());
         invoice.setStatus(InvoiceStatus.PAID);
+        if (invoice.getPromotionCode() != null && promotionRepository != null) {
+            promotionRepository.findByCodeIgnoreCaseForUpdate(invoice.getPromotionCode()).ifPresent(promotion -> {
+                promotion.setUsageCount((promotion.getUsageCount() == null ? 0 : promotion.getUsageCount()) + 1);
+                promotionRepository.save(promotion);
+            });
+        }
+        awardLoyaltyPoints(invoice);
 
         // Chuyển đổi trạng thái bàn từ "Đang dùng" (OCCUPIED) trở về "Trống" (AVAILABLE)
         CafeTable table = invoice.getCafeTable();
@@ -348,10 +378,34 @@ public class InvoiceServiceImpl implements InvoiceService {
     ) {
         BigDecimal subtotal = invoice.getSubtotal();
         BigDecimal calculatedDiscount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        invoice.setPromotionCode(null);
 
         if (discountCode != null && !discountCode.isBlank()) {
             String code = discountCode.trim().toUpperCase(Locale.ROOT);
-            switch (code) {
+            Promotion promotion = promotionRepository == null ? null : promotionRepository.findByCodeIgnoreCaseForUpdate(code).orElse(null);
+            if (promotion != null) {
+                LocalDateTime now = LocalDateTime.now();
+                if (!promotion.isActive() || (promotion.getStartsAt() != null && now.isBefore(promotion.getStartsAt()))
+                        || (promotion.getEndsAt() != null && now.isAfter(promotion.getEndsAt()))
+                        || (promotion.getUsageLimit() != null
+                        && (promotion.getUsageCount() == null ? 0 : promotion.getUsageCount()) >= promotion.getUsageLimit())) {
+                    throw new BadRequestException("Mã khuyến mãi hiện không khả dụng");
+                }
+                if (promotion.getMinimumSpend() != null && subtotal.compareTo(promotion.getMinimumSpend()) < 0) {
+                    throw new BadRequestException("Hóa đơn chưa đạt giá trị tối thiểu của mã khuyến mãi");
+                }
+                if ("AMOUNT".equalsIgnoreCase(promotion.getDiscountType())) {
+                    calculatedDiscount = promotion.getDiscountValue();
+                } else if ("PERCENT".equalsIgnoreCase(promotion.getDiscountType())
+                        && promotion.getDiscountValue().signum() >= 0
+                        && promotion.getDiscountValue().compareTo(BigDecimal.valueOf(100)) <= 0) {
+                    calculatedDiscount = subtotal.multiply(promotion.getDiscountValue())
+                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                } else {
+                    throw new BadRequestException("Cấu hình khuyến mãi không hợp lệ");
+                }
+                invoice.setPromotionCode(promotion.getCode());
+            } else switch (code) {
                 case "GIAM10", "WELCOME" ->
                         calculatedDiscount = subtotal.multiply(BigDecimal.valueOf(0.10)).setScale(2, RoundingMode.HALF_UP);
                 case "GIAM20" ->
@@ -367,6 +421,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             if (discountPercent < 0 || discountPercent > 100) {
                 throw new BadRequestException("Phần trăm giảm giá phải nằm trong khoảng từ 0% đến 100%");
             }
+
             calculatedDiscount = subtotal.multiply(BigDecimal.valueOf(discountPercent))
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         } else if (discountAmount != null) {
@@ -386,6 +441,37 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setDiscount(calculatedDiscount.setScale(2, RoundingMode.HALF_UP));
         BigDecimal totalAmount = subtotal.subtract(calculatedDiscount).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
         invoice.setTotalAmount(totalAmount);
+    }
+
+    private void awardLoyaltyPoints(Invoice invoice) {
+        if (invoice.getCustomer() == null || loyaltyEntryRepository == null
+                || loyaltyEntryRepository.existsByInvoiceIdAndEntryType(invoice.getId(), "EARN")) return;
+        int points = invoice.getTotalAmount().divideToIntegralValue(BigDecimal.valueOf(10000)).intValue();
+        if (points <= 0) return;
+        Customer customer = invoice.getCustomer();
+        customer.setLoyaltyPoints((customer.getLoyaltyPoints() == null ? 0 : customer.getLoyaltyPoints()) + points);
+        customerRepository.save(customer);
+        LoyaltyEntry entry = new LoyaltyEntry();
+        entry.setCustomer(customer);
+        entry.setInvoice(invoice);
+        entry.setPoints(points);
+        entry.setEntryType("EARN");
+        entry.setDescription("Tích điểm từ hóa đơn #" + invoice.getId());
+        loyaltyEntryRepository.save(entry);
+    }
+
+    private void validatePromotionAtCheckout(Invoice invoice) {
+        if (invoice.getPromotionCode() == null || promotionRepository == null) return;
+        Promotion promotion = promotionRepository.findByCodeIgnoreCaseForUpdate(invoice.getPromotionCode())
+                .orElseThrow(() -> new BadRequestException("Mã khuyến mãi không còn hợp lệ"));
+        LocalDateTime now = LocalDateTime.now();
+        if (!promotion.isActive() || (promotion.getStartsAt() != null && now.isBefore(promotion.getStartsAt()))
+                || (promotion.getEndsAt() != null && now.isAfter(promotion.getEndsAt()))
+                || (promotion.getUsageLimit() != null
+                && (promotion.getUsageCount() == null ? 0 : promotion.getUsageCount()) >= promotion.getUsageLimit())
+                || (promotion.getMinimumSpend() != null && invoice.getSubtotal().compareTo(promotion.getMinimumSpend()) < 0)) {
+            throw new BadRequestException("Mã khuyến mãi hiện không khả dụng cho hóa đơn này");
+        }
     }
 
     private void recalculateInvoiceAmounts(Invoice invoice) {

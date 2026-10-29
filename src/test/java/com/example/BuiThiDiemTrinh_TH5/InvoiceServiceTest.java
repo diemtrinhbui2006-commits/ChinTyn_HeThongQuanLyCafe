@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.example.BuiThiDiemTrinh_TH5.dto.ApplyDiscountRequest;
 import com.example.BuiThiDiemTrinh_TH5.dto.CheckoutRequest;
@@ -26,6 +27,10 @@ import com.example.BuiThiDiemTrinh_TH5.entity.Invoice;
 import com.example.BuiThiDiemTrinh_TH5.entity.InvoiceStatus;
 import com.example.BuiThiDiemTrinh_TH5.entity.PaymentMethod;
 import com.example.BuiThiDiemTrinh_TH5.entity.Product;
+import com.example.BuiThiDiemTrinh_TH5.entity.Customer;
+import com.example.BuiThiDiemTrinh_TH5.entity.Promotion;
+import com.example.BuiThiDiemTrinh_TH5.entity.Expense;
+import com.example.BuiThiDiemTrinh_TH5.controller.OperationsController;
 import com.example.BuiThiDiemTrinh_TH5.entity.TableStatus;
 import com.example.BuiThiDiemTrinh_TH5.exception.BadRequestException;
 import com.example.BuiThiDiemTrinh_TH5.repository.CafeTableRepository;
@@ -33,6 +38,10 @@ import com.example.BuiThiDiemTrinh_TH5.repository.CategoryRepository;
 import com.example.BuiThiDiemTrinh_TH5.repository.EmployeeRepository;
 import com.example.BuiThiDiemTrinh_TH5.repository.InvoiceRepository;
 import com.example.BuiThiDiemTrinh_TH5.repository.ProductRepository;
+import com.example.BuiThiDiemTrinh_TH5.repository.CustomerRepository;
+import com.example.BuiThiDiemTrinh_TH5.repository.PromotionRepository;
+import com.example.BuiThiDiemTrinh_TH5.repository.LoyaltyEntryRepository;
+import com.example.BuiThiDiemTrinh_TH5.repository.ExpenseRepository;
 import com.example.BuiThiDiemTrinh_TH5.service.InvoiceService;
 
 @SpringBootTest
@@ -57,6 +66,21 @@ class InvoiceServiceTest {
 
     @Autowired
     private InvoiceRepository invoiceRepository;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private PromotionRepository promotionRepository;
+
+    @Autowired
+    private LoyaltyEntryRepository loyaltyEntryRepository;
+
+    @Autowired
+    private OperationsController operationsController;
+
+    @Autowired
+    private ExpenseRepository expenseRepository;
 
     private CafeTable table;
     private Employee employee;
@@ -99,6 +123,81 @@ class InvoiceServiceTest {
         table.setCapacity(4);
         table.setStatus(TableStatus.AVAILABLE);
         table = cafeTableRepository.save(table);
+    }
+
+    @Test
+    @DisplayName("Khuyến mãi quản lý được và chỉ tích điểm sau thanh toán thành công")
+    void promotionAndLoyaltyAreAppliedAtSuccessfulCheckout() {
+        Customer customer = new Customer();
+        customer.setName("Khach hang tich diem");
+        customer = customerRepository.save(customer);
+
+        Promotion promotion = new Promotion();
+        promotion.setCode("TEST25");
+        promotion.setName("Giam 25 phan tram");
+        promotion.setDiscountType("PERCENT");
+        promotion.setDiscountValue(new BigDecimal("25"));
+        promotion.setActive(true);
+        promotion.setUsageCount(0);
+        promotion = promotionRepository.save(promotion);
+
+        Invoice invoice = invoiceService.orderFood(new OrderFoodRequest(
+                table.getId(), employee.getId(), customer.getId(), tea.getId(), 2, null));
+        assertEquals(0, customerRepository.findById(customer.getId()).orElseThrow().getLoyaltyPoints());
+
+        invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest("TEST25", null, null));
+        Invoice paid = invoiceService.checkout(invoice.getId(), new CheckoutRequest(PaymentMethod.CASH, null, null, null));
+
+        assertEquals(InvoiceStatus.PAID, paid.getStatus());
+        assertEquals(new BigDecimal("60000.00"), paid.getTotalAmount());
+        assertEquals(6, customerRepository.findById(customer.getId()).orElseThrow().getLoyaltyPoints());
+        assertEquals(1, loyaltyEntryRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId()).size());
+        assertEquals(1, promotionRepository.findById(promotion.getId()).orElseThrow().getUsageCount());
+    }
+
+    @Test
+    @DisplayName("QR guest order remains queued and does not create an invoice until staff approval")
+    void guestQrOrderRequiresStaffApprovalBeforeInvoiceCreation() {
+        String token = operationsController.createQrToken(table.getId()).get("token");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/api/qr/tokens/" + token + "/image");
+        byte[] qrImage = operationsController.qrImage(token, request);
+        assertEquals((byte) 0x89, qrImage[0]);
+        assertEquals((byte) 0x50, qrImage[1]);
+        OperationsController.GuestOrderView queued = operationsController.guestOrder(token,
+                new OperationsController.GuestOrderInput("Guest", null,
+                        List.of(new OrderItemRequest(coffee.getId(), 1))));
+        assertEquals("QUEUED", queued.status());
+        assertTrue(invoiceRepository.findByCafeTableId(table.getId()).isEmpty());
+        assertEquals(TableStatus.AVAILABLE, cafeTableRepository.findById(table.getId()).orElseThrow().getStatus());
+
+        OperationsController.GuestOrderView approved = operationsController.approveGuestOrder(
+                queued.id(), new OperationsController.ApprovalInput(employee.getId()));
+        assertEquals("APPROVED", approved.status());
+        assertNotNull(approved.invoiceId());
+        assertEquals(InvoiceStatus.OPEN, invoiceRepository.findById(approved.invoiceId()).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("Đối soát ca tính doanh thu tiền mặt và chi phí ghi nhận trong thời gian ca")
+    void shiftCashReconciliationUsesCashInvoicesAndExpensesInShiftWindow() {
+        OperationsController.ShiftView shift = operationsController.openShift(
+                new OperationsController.ShiftOpenInput(employee.getId(), new BigDecimal("100000")));
+        Invoice invoice = invoiceService.orderFood(new OrderFoodRequest(
+                table.getId(), employee.getId(), null, coffee.getId(), 1, null));
+        invoiceService.checkout(invoice.getId(), new CheckoutRequest(PaymentMethod.CASH, null, null, null));
+
+        Expense expense = new Expense();
+        expense.setDescription("Mua da");
+        expense.setCategory("Nguyen lieu");
+        expense.setAmount(new BigDecimal("5000"));
+        expense.setPaymentMethod(PaymentMethod.CASH);
+        expenseRepository.save(expense);
+
+        OperationsController.ShiftView closed = operationsController.closeShift(shift.id(),
+                new OperationsController.ShiftCloseInput(new BigDecimal("125000"), null));
+        assertEquals(0, closed.expectedCash().compareTo(new BigDecimal("125000.00")));
+        assertEquals(0, closed.closingCash().compareTo(new BigDecimal("125000.00")));
     }
 
     @Test

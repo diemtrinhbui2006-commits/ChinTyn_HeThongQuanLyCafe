@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gọi món - ChinTyn Coffee</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main class="content-area" style="max-width:760px;margin:32px auto">
+    <h1>☕ Gọi món tại bàn <span id="tableLabel"></span></h1>
+    <p>Đơn gọi món sẽ được nhân viên xác nhận trước khi chuyển vào hóa đơn.</p>
+    <label>Tên khách (không bắt buộc) <input id="guestName" maxlength="100"></label>
+    <label>Số điện thoại (không bắt buộc) <input id="guestPhone" maxlength="20"></label>
+    <div id="guestMenu">Đang tải thực đơn...</div>
+    <button id="submitGuestOrder" type="button">Gửi yêu cầu gọi món</button>
+    <p id="guestMessage" role="status"></p>
+  </main>
+  <script type="module" src="/js/guestOrder.js"></script>
+</body>
+</html>

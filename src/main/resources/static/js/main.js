@@ -13,6 +13,17 @@ import { loadUsersAdmin } from './modules/userModule.js';
 import { initReceiptModalEvents } from './modules/receiptModal.js';
 import { initAuthEvents } from './modules/authModule.js';
 import { showToast } from './utils/toast.js';
+import { loadOperations, initOperationsEvents } from './modules/operationsModule.js';
+
+const operationsPages = new Set([
+  'inventory',
+  'reservations',
+  'shifts',
+  'suppliers',
+  'promotions',
+  'qr-orders',
+  'loyalty',
+]);
 
 document.addEventListener('DOMContentLoaded', async () => {
   initClock();
@@ -26,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Khởi tạo các sự kiện của Modal
   initReceiptModalEvents();
+  initOperationsEvents();
   initProductModalEvents();
   initTableAdminEvents();
   initCategoryAdminEvents();
@@ -69,6 +81,13 @@ function initNavigation() {
         dashboard: '📊 Tổng Quan Hệ Thống (Dashboard)',
         customers: '👥 Danh Sách Khách Hàng',
         users: '👨‍💼 Quản Lý Nhân Viên & Tài Khoản',
+        inventory: '📦 Kho Nguyên Liệu',
+        reservations: '🗓️ Quản Lý Đặt Bàn',
+        shifts: '🧾 Ca Làm Việc & Đối Soát',
+        suppliers: '🚚 Nhà Cung Cấp & Chi Phí',
+        promotions: '🎟️ Khuyến Mãi & Ưu Đãi',
+        'qr-orders': '📲 Gọi Món Qua QR',
+        loyalty: '⭐ Chương Trình Điểm Thưởng',
       };
       const titleEl = document.getElementById('topbarPageTitle');
       if (titleEl) titleEl.textContent = titles[target] || 'Hệ Thống Quản Lý Cafe';
@@ -82,6 +101,7 @@ function initNavigation() {
       if (target === 'tables') loadTablesAdmin();
       if (target === 'customers') loadCustomersAdmin();
       if (target === 'users') loadUsersAdmin();
+      if (operationsPages.has(target)) loadOperations();
     });
   });
 }
@@ -94,6 +114,7 @@ function initGlobalRefresh() {
       const activeNav = document.querySelector('.nav-item.active')?.dataset.page;
       if (activeNav === 'orders') await loadOrdersHistory();
       else if (activeNav === 'dashboard') await loadDashboard();
+      else if (operationsPages.has(activeNav)) await loadOperations();
       else await loadPosData();
       showToast('Đã làm mới dữ liệu hệ thống!', 'success');
     });

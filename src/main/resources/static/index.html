@@ -34,6 +34,34 @@
         <span class="icon">🪑</span>
         <span>Quản lý bàn</span>
       </a>
+      <a class="nav-item" data-page="inventory">
+        <span class="icon">📦</span>
+        <span>Kho nguyên liệu</span>
+      </a>
+      <a class="nav-item" data-page="reservations">
+        <span class="icon">🗓️</span>
+        <span>Đặt bàn</span>
+      </a>
+      <a class="nav-item" data-page="shifts">
+        <span class="icon">🧾</span>
+        <span>Ca & đối soát</span>
+      </a>
+      <a class="nav-item" data-page="suppliers">
+        <span class="icon">🚚</span>
+        <span>Nhà cung cấp & chi phí</span>
+      </a>
+      <a class="nav-item" data-page="promotions">
+        <span class="icon">🎟️</span>
+        <span>Khuyến mãi</span>
+      </a>
+      <a class="nav-item" data-page="qr-orders">
+        <span class="icon">📲</span>
+        <span>Gọi món QR</span>
+      </a>
+      <a class="nav-item" data-page="loyalty">
+        <span class="icon">⭐</span>
+        <span>Điểm thưởng</span>
+      </a>
 
       <div class="nav-category">Quản Trị Thực Đơn</div>
       <a class="nav-item" data-page="products">
@@ -169,13 +197,33 @@
                 <span id="cartFinalTotal" style="color:#d97706;">0 ₫</span>
               </div>
 
-              <!-- Tiền khách đưa -->
               <div class="cash-change-calc">
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-secondary);">
-                  <span>Khách đưa:</span>
-                  <span>Tiền thối: <strong id="changeReturnText" style="color:var(--success);">0 ₫</strong></span>
+                <div class="cash-payment-heading">
+                  <div>
+                    <span class="cash-payment-title">Khách thanh toán</span>
+                    <span class="cash-payment-hint">Chọn mệnh giá để trừ vào số tiền còn phải trả</span>
+                  </div>
+                  <button type="button" class="cash-clear-btn" id="btnClearCash">Xóa</button>
                 </div>
-                <input type="number" id="cashReceivedInput" placeholder="Nhập tiền khách đưa...">
+                <div class="cash-denominations" aria-label="Mệnh giá tiền mặt">
+                  <button type="button" class="cash-denomination-btn" data-cash-deduct="10000">10.000 ₫</button>
+                  <button type="button" class="cash-denomination-btn" data-cash-deduct="20000">20.000 ₫</button>
+                  <button type="button" class="cash-denomination-btn" data-cash-deduct="50000">50.000 ₫</button>
+                  <button type="button" class="cash-denomination-btn" data-cash-deduct="100000">100.000 ₫</button>
+                  <button type="button" class="cash-denomination-btn" data-cash-deduct="200000">200.000 ₫</button>
+                  <button type="button" class="cash-denomination-btn" data-cash-deduct="500000">500.000 ₫</button>
+                </div>
+                <div class="cash-input-row">
+                  <label for="cashRemainingInput">Số tiền còn phải trả</label>
+                  <div class="cash-input-controls">
+                    <input type="number" id="cashRemainingInput" placeholder="Số tiền còn lại..." step="1000" inputmode="numeric">
+                    <button type="button" class="cash-exact-btn" id="btnCashExact">Đủ tiền</button>
+                  </div>
+                </div>
+                <div class="cash-change-result">
+                  <span>Tiền thối</span>
+                  <strong id="changeReturnText">0 ₫</strong>
+                </div>
               </div>
 
               <div class="checkout-btn-group">
@@ -399,6 +447,117 @@
               </thead>
               <tbody id="usersAdminBody"></tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view" id="inventoryPageView">
+        <div class="admin-container">
+          <div class="data-card">
+            <div class="data-card-header"><h3>Kho nguyên liệu & tồn thấp</h3></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px">
+              <input id="opIngredientName" placeholder="Tên nguyên liệu">
+              <input id="opIngredientUnit" placeholder="Đơn vị (kg, lít...)">
+              <input id="opIngredientThreshold" type="number" min="0" step="0.001" placeholder="Ngưỡng cảnh báo">
+              <button id="opAddIngredient" class="btn-primary">Thêm nguyên liệu</button>
+              <select id="opIngredientSelect"></select>
+              <input id="opStockQuantity" type="number" step="0.001" placeholder="Điều chỉnh (+/-)">
+              <button id="opAdjustStock" class="btn-primary">Điều chỉnh kho</button>
+            </div>
+            <div id="opIngredients"></div>
+            <div id="opProductLowStock"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view" id="reservationsPageView">
+        <div class="admin-container">
+          <div class="data-card">
+            <div class="data-card-header"><h3>Đặt bàn</h3></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px">
+              <select id="opReservationTable"></select><input id="opReservationName" placeholder="Tên khách">
+              <input id="opReservationPhone" placeholder="Điện thoại"><input id="opReservationDate" type="datetime-local">
+              <input id="opReservationParty" type="number" min="1" value="2" placeholder="Số khách">
+              <button id="opCreateReservation" class="btn-primary">Tạo đặt bàn</button>
+            </div>
+            <div id="opReservations"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view" id="shiftsPageView">
+        <div class="admin-container">
+          <div class="data-card">
+            <div class="data-card-header"><h3>Ca làm việc & đối soát tiền mặt</h3></div>
+            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
+              <input id="opOpeningCash" type="number" min="0" placeholder="Tiền đầu ca">
+              <button id="opOpenShift" class="btn-primary">Mở ca của tôi</button>
+              <select id="opShiftSelect"></select><input id="opClosingCash" type="number" min="0" placeholder="Tiền kiểm kê cuối ca">
+              <button id="opCloseShift" class="btn-primary">Đóng ca & đối soát</button>
+            </div><div id="opShifts"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view" id="suppliersPageView">
+        <div class="admin-container">
+          <div class="data-card">
+            <div class="data-card-header"><h3>Nhà cung cấp & chi phí / nhập hàng</h3></div>
+            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
+              <input id="opSupplierName" placeholder="Tên nhà cung cấp"><input id="opSupplierPhone" placeholder="Điện thoại">
+              <button id="opAddSupplier" class="btn-primary">Thêm nhà cung cấp</button>
+              <input id="opExpenseDescription" placeholder="Nội dung chi"><input id="opExpenseCategory" placeholder="Danh mục">
+              <input id="opExpenseAmount" type="number" min="1" placeholder="Số tiền">
+              <select id="opExpenseMethod"><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD">Thẻ</option><option value="E_WALLET">Ví điện tử</option></select>
+              <select id="opExpenseSupplier"></select><select id="opPurchaseIngredient"></select>
+              <input id="opPurchaseQuantity" type="number" min="0.001" step="0.001" placeholder="SL nhập (tùy chọn)">
+              <button id="opAddExpense" class="btn-primary">Ghi chi phí / nhập kho</button>
+            </div><div id="opSuppliers"></div><div id="opExpenses"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view" id="promotionsPageView">
+        <div class="admin-container">
+          <div class="data-card">
+            <div class="data-card-header"><h3>Mã khuyến mãi & ưu đãi</h3></div>
+            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
+              <input id="opPromoCode" placeholder="Mã"><input id="opPromoName" placeholder="Tên khuyến mãi">
+              <select id="opPromoType"><option value="PERCENT">Phần trăm</option><option value="AMOUNT">Số tiền</option></select>
+              <input id="opPromoValue" type="number" min="0" step="0.01" placeholder="Giá trị giảm">
+              <input id="opPromoMinimum" type="number" min="0" placeholder="Đơn tối thiểu">
+              <input id="opPromoStarts" type="datetime-local" title="Bắt đầu">
+              <input id="opPromoEnds" type="datetime-local" title="Kết thúc">
+              <input id="opPromoLimit" type="number" min="1" placeholder="Lượt sử dụng tối đa">
+              <button id="opAddPromotion" class="btn-primary">Tạo mã</button>
+            </div><div id="opPromotions"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view" id="qr-ordersPageView">
+        <div class="admin-container">
+          <div class="data-card">
+            <div class="data-card-header"><h3>QR gọi món - hàng chờ nhân viên duyệt</h3></div>
+            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
+              <select id="opQrTable"></select><button id="opCreateQr" class="btn-primary">Tạo liên kết / QR token</button>
+              <output id="opQrLink"></output>
+            </div><div id="opQrQueue"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-view" id="loyaltyPageView">
+        <div class="admin-container">
+          <div class="data-card">
+            <div class="data-card-header"><h3>Điểm thưởng khách hàng</h3></div>
+            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
+              <input id="opLoyaltyCustomer" type="number" min="1" placeholder="Mã khách hàng">
+              <button id="opLoadLoyalty" class="btn-primary">Xem lịch sử</button>
+              <select id="opRewardSelect"></select><button id="opRedeemReward" class="btn-primary">Đổi phần thưởng</button>
+              <input id="opRewardName" placeholder="Tên phần thưởng"><input id="opRewardCost" type="number" min="1" placeholder="Điểm quy đổi">
+              <button id="opAddReward" class="btn-primary">Tạo phần thưởng</button>
+            </div><div id="opLoyaltyHistory"></div>
           </div>
         </div>
       </section>
