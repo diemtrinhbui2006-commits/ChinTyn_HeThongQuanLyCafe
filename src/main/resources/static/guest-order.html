@@ -1,21 +1,258 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gọi món - ChinTyn Coffee</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gọi Món Tại Bàn - ChinTyn Coffee</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
+  <style>
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      display: block;
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto;
+      padding-bottom: 90px;
+    }
+    .guest-container {
+      max-width: 580px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .guest-header {
+      background: #0f172a;
+      color: #fff;
+      padding: 24px 20px;
+      border-radius: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+    .guest-header h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .guest-table-badge {
+      display: inline-block;
+      background: #f59e0b;
+      color: #fff;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      margin-top: 6px;
+    }
+    .guest-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+    }
+    .guest-card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+    .guest-inputs-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .guest-inputs-row input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-sizing: border-box;
+    }
+    .guest-menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .guest-menu-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid #f1f5f9;
+      border-radius: 14px;
+      background: #fff;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .guest-menu-item:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    }
+    .guest-item-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+    .guest-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .guest-item-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+    .guest-item-price {
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #d97706;
+    }
+    .guest-item-desc {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+    .guest-stepper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 3px 6px;
+      flex-shrink: 0;
+    }
+    .guest-stepper button {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: #fff;
+      border-radius: 6px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+      color: #0f172a;
+    }
+    .guest-stepper button:active {
+      transform: scale(0.95);
+    }
+    .guest-stepper span {
+      min-width: 20px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    /* Floating Bottom Bar */
+    .guest-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      padding: 12px 16px;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+    .guest-bottom-inner {
+      max-width: 580px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .guest-btn-submit {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+      flex-shrink: 0;
+    }
+    .guest-btn-submit:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+  </style>
 </head>
 <body>
-  <main class="content-area" style="max-width:760px;margin:32px auto">
-    <h1>☕ Gọi món tại bàn <span id="tableLabel"></span></h1>
-    <p>Đơn gọi món sẽ được nhân viên xác nhận trước khi chuyển vào hóa đơn.</p>
-    <label>Tên khách (không bắt buộc) <input id="guestName" maxlength="100"></label>
-    <label>Số điện thoại (không bắt buộc) <input id="guestPhone" maxlength="20"></label>
-    <div id="guestMenu">Đang tải thực đơn...</div>
-    <button id="submitGuestOrder" type="button">Gửi yêu cầu gọi món</button>
-    <p id="guestMessage" role="status"></p>
-  </main>
-  <script type="module" src="/js/guestOrder.js"></script>
+
+  <div class="guest-container">
+    <!-- Header -->
+    <div class="guest-header">
+      <h1>☕ CHINTYN COFFEE</h1>
+      <p style="font-size: 0.85rem; opacity: 0.85;">Chào mừng bạn đến với quán!</p>
+      <div class="guest-table-badge" id="tableLabel">Đang tải bàn...</div>
+    </div>
+
+    <!-- Thông tin khách -->
+    <div class="guest-card">
+      <h3>👤 Thông Tin Khách Hàng (Tùy chọn)</h3>
+      <div class="guest-inputs-row">
+        <input type="text" id="guestName" placeholder="Tên của bạn..." maxlength="50">
+        <input type="tel" id="guestPhone" placeholder="Số điện thoại..." maxlength="15">
+      </div>
+    </div>
+
+    <!-- Danh sách món -->
+    <div class="guest-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0;">📜 Thực Đơn Gọi Món</h3>
+        <span id="guestItemsCountBadge" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">--</span>
+      </div>
+      <div class="guest-menu-list" id="guestMenuList">
+        <p style="text-align: center; color: #94a3b8; padding: 20px;">Đang tải thực đơn...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="guest-bottom-bar">
+    <div class="guest-bottom-inner">
+      <div>
+        <div style="font-size: 0.75rem; color: #64748b;">Đã chọn: <strong id="guestSelectedCount" style="color: #0f172a;">0 món</strong></div>
+        <div style="font-size: 1.15rem; font-weight: 800; color: #d97706;" id="guestTotalAmount">0 ₫</div>
+      </div>
+      <button class="guest-btn-submit" id="submitGuestOrder" disabled>
+        🚀 Gửi Món Ngay
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Toast Message -->
+  <div id="guestMessageModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 999; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #fff; border-radius: 20px; padding: 28px 20px; max-width: 360px; text-align: center; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2);">
+      <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
+      <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Đã Gửi Món Thành Công!</h2>
+      <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 20px;">
+        Nhân viên quán đã nhận được yêu cầu và đang chuẩn bị món mang tới bàn cho bạn. Chúc bạn có trải nghiệm tuyệt vời!
+      </p>
+      <button type="button" onclick="location.reload()" class="guest-btn-submit" style="width: 100%;">
+        Tiếp Tục Xem Thực Đơn
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="/js/guestOrder.js?v=2.0"></script>
 </body>
 </html>

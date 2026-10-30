@@ -470,49 +470,191 @@
         </div>
       </section>
 
-      <section class="page-view" id="reservationsPageView">
+            <section class="page-view" id="reservationsPageView">
         <div class="admin-container">
           <div class="data-card">
-            <div class="data-card-header"><h3>Đặt bàn</h3></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px">
-              <select id="opReservationTable"></select><input id="opReservationName" placeholder="Tên khách">
-              <input id="opReservationPhone" placeholder="Điện thoại"><input id="opReservationDate" type="datetime-local">
-              <input id="opReservationParty" type="number" min="1" value="2" placeholder="Số khách">
-              <button id="opCreateReservation" class="btn-primary">Tạo đặt bàn</button>
+            <div class="data-card-header">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <h3 style="margin:0;">🗓️ Quản Lý Đặt Bàn Trước</h3>
+              </div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <button class="btn-action-sm" id="btnRefreshReservations" title="Tải lại danh sách">🔄 Làm Mới</button>
+                <button class="btn-primary" id="btnOpenAddReservationModal">➕ Tạo Đặt Bàn Mới</button>
+              </div>
             </div>
-            <div id="opReservations"></div>
+            <div style="display:flex; gap:12px; padding:16px 20px; background:#f8fafc; border-bottom:1px solid var(--border-color); flex-wrap:wrap; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px;">
+                <span style="font-size:0.9rem; color:#64748b;">🔍</span>
+                <input type="text" id="resSearchInput" placeholder="Tìm theo tên khách, SĐT hoặc số bàn..." style="width:100%; padding:8px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem;">
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:0.85rem; font-weight:600; color:#64748b;">Trạng thái:</span>
+                <select id="resFilterStatus" style="padding:8px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:0.85rem; background:#fff;">
+                  <option value="ALL">Tất cả trạng thái</option>
+                  <option value="BOOKED">Đang đặt trước</option>
+                  <option value="CANCELLED">Đã hủy</option>
+                </select>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:70px;">Mã ĐB</th>
+                    <th style="width:110px;">Bàn Ăn</th>
+                    <th>Khách Hàng</th>
+                    <th>Số Điện Thoại</th>
+                    <th>Thời Gian Hẹn</th>
+                    <th>Số Khách</th>
+                    <th>Trạng Thái</th>
+                    <th style="width:120px;">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="reservationsTableBody">
+                  <tr><td colspan="8" align="center" style="padding:20px; color:#64748b;">⏳ Đang tải danh sách đặt bàn...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="page-view" id="shiftsPageView">
+            <section class="page-view" id="shiftsPageView">
         <div class="admin-container">
+          <!-- KPI & Active Shift Status Card -->
+          <div class="kpi-cards-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:#e0f2fe; color:#0284c7;">⏱️</div>
+              <div class="kpi-info">
+                <h4>Trạng Thái Ca Hiện Tại</h4>
+                <div class="kpi-value" id="shiftKpiStatus" style="font-size:1.15rem;">Đang tải...</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:#fef3c7; color:#d97706;">👤</div>
+              <div class="kpi-info">
+                <h4>Nhân Viên Phụ Trách</h4>
+                <div class="kpi-value" id="shiftKpiEmployee" style="font-size:1.05rem;">--</div>
+              </div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-icon" style="background:#dcfce7; color:#16a34a;">💵</div>
+              <div class="kpi-info">
+                <h4>Tiền Mặt Đầu Ca</h4>
+                <div class="kpi-value" id="shiftKpiOpeningCash" style="font-size:1.15rem;">0 ₫</div>
+              </div>
+            </div>
+          </div>
+
           <div class="data-card">
-            <div class="data-card-header"><h3>Ca làm việc & đối soát tiền mặt</h3></div>
-            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
-              <input id="opOpeningCash" type="number" min="0" placeholder="Tiền đầu ca">
-              <button id="opOpenShift" class="btn-primary">Mở ca của tôi</button>
-              <select id="opShiftSelect"></select><input id="opClosingCash" type="number" min="0" placeholder="Tiền kiểm kê cuối ca">
-              <button id="opCloseShift" class="btn-primary">Đóng ca & đối soát</button>
-            </div><div id="opShifts"></div>
+            <div class="data-card-header">
+              <h3 style="margin:0;">🧾 Ca Làm Việc & Đối Soát Tiền Mặt</h3>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <button class="btn-action-sm" id="btnRefreshShifts" title="Làm mới lịch sử ca">🔄 Làm Mới</button>
+                <button class="btn-primary" id="btnToggleShiftAction">🟢 Mở Ca Làm Việc Mới</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:70px;">Mã Ca</th>
+                    <th>Nhân Viên</th>
+                    <th>Giờ Mở Ca</th>
+                    <th>Giờ Đóng Ca</th>
+                    <th>Tiền Đầu Ca</th>
+                    <th>Tiền Dự Kiến</th>
+                    <th>Kiểm Kê Cuối Ca</th>
+                    <th>Chênh Lệch</th>
+                    <th>Ghi Chú</th>
+                  </tr>
+                </thead>
+                <tbody id="shiftsTableBody">
+                  <tr><td colspan="9" align="center" style="padding:20px; color:#64748b;">⏳ Đang tải dữ liệu ca làm việc...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="page-view" id="suppliersPageView">
+            <section class="page-view" id="suppliersPageView">
         <div class="admin-container">
-          <div class="data-card">
-            <div class="data-card-header"><h3>Nhà cung cấp & chi phí / nhập hàng</h3></div>
-            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
-              <input id="opSupplierName" placeholder="Tên nhà cung cấp"><input id="opSupplierPhone" placeholder="Điện thoại">
-              <button id="opAddSupplier" class="btn-primary">Thêm nhà cung cấp</button>
-              <input id="opExpenseDescription" placeholder="Nội dung chi"><input id="opExpenseCategory" placeholder="Danh mục">
-              <input id="opExpenseAmount" type="number" min="1" placeholder="Số tiền">
-              <select id="opExpenseMethod"><option value="CASH">Tiền mặt</option><option value="BANK_TRANSFER">Chuyển khoản</option><option value="CARD">Thẻ</option><option value="E_WALLET">Ví điện tử</option></select>
-              <select id="opExpenseSupplier"></select><select id="opPurchaseIngredient"></select>
-              <input id="opPurchaseQuantity" type="number" min="0.001" step="0.001" placeholder="SL nhập (tùy chọn)">
-              <button id="opAddExpense" class="btn-primary">Ghi chi phí / nhập kho</button>
-            </div><div id="opSuppliers"></div><div id="opExpenses"></div>
+          <!-- Top Sub-Tab Navigation & Total Expense KPI -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; gap:8px; background:#e2e8f0; padding:4px; border-radius:8px;">
+              <button id="tabBtnExpenses" class="btn-action-sm active" style="padding:8px 16px; border:none; border-radius:6px; cursor:pointer;">💸 Quản Lý Chi Phí & Nhập Hàng</button>
+              <button id="tabBtnSuppliers" class="btn-action-sm" style="padding:8px 16px; border:none; border-radius:6px; cursor:pointer;">🚚 Danh Sách Nhà Cung Cấp</button>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <button class="btn-action-sm" id="btnRefreshSupplierExpenses">🔄 Làm Mới</button>
+            </div>
+          </div>
+
+          <!-- Subview 1: Chi Phí & Nhập Kho -->
+          <div id="subviewExpenses">
+            <div class="kpi-cards-grid" style="grid-template-columns: 1fr; margin-bottom:16px;">
+              <div class="kpi-card" style="border-left: 4px solid #ef4444;">
+                <div class="kpi-icon" style="background:#fee2e2; color:#dc2626;">📉</div>
+                <div class="kpi-info">
+                  <h4>Tổng Chi Phí Vận Hành Đã Ghi Nhận</h4>
+                  <div class="kpi-value" id="kpiTotalExpensesAmount" style="color:#ef4444;">0 ₫</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="data-card">
+              <div class="data-card-header">
+                <h3 style="margin:0;">Lịch Sử Chi Phí & Hóa Đơn Nhập Hàng</h3>
+                <button class="btn-primary" id="btnOpenAddExpenseModal">➕ Ghi Nhận Chi Phí / Nhập Hàng</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:70px;">Mã Chi</th>
+                      <th>Nội Dung Khoản Chi</th>
+                      <th>Phân Loại</th>
+                      <th>Số Tiền Chi</th>
+                      <th>Hình Thức Thanh Toán</th>
+                      <th>Nhà Cung Cấp / Đối Tác</th>
+                      <th>Thời Gian</th>
+                    </tr>
+                  </thead>
+                  <tbody id="expensesTableBody">
+                    <tr><td colspan="7" align="center" style="padding:20px; color:#64748b;">⏳ Đang tải dữ liệu chi phí...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subview 2: Danh Sách Nhà Cung Cấp -->
+          <div id="subviewSuppliers" style="display:none;">
+            <div class="data-card">
+              <div class="data-card-header">
+                <h3 style="margin:0;">Danh Sách Đối Tác & Nhà Cung Cấp</h3>
+                <button class="btn-primary" id="btnOpenAddSupplierModal">➕ Thêm Nhà Cung Cấp</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:70px;">Mã NCC</th>
+                      <th>Tên Nhà Cung Cấp</th>
+                      <th>Người Liên Hệ</th>
+                      <th>Số Điện Thoại</th>
+                      <th>Email</th>
+                      <th>Địa Chỉ</th>
+                      <th style="width:90px;">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="suppliersTableBody">
+                    <tr><td colspan="7" align="center" style="padding:20px; color:#64748b;">⏳ Đang tải danh sách nhà cung cấp...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -535,29 +677,135 @@
         </div>
       </section>
 
-      <section class="page-view" id="qr-ordersPageView">
+            <section class="page-view" id="qr-ordersPageView">
         <div class="admin-container">
-          <div class="data-card">
-            <div class="data-card-header"><h3>QR gọi món - hàng chờ nhân viên duyệt</h3></div>
-            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
-              <select id="opQrTable"></select><button id="opCreateQr" class="btn-primary">Tạo liên kết / QR token</button>
-              <output id="opQrLink"></output>
-            </div><div id="opQrQueue"></div>
+          <div style="display:grid; grid-template-columns: 360px 1fr; gap:20px; align-items:start;">
+            <!-- Left Card: Tạo mã QR cho bàn -->
+            <div class="data-card">
+              <div class="data-card-header">
+                <h3 style="margin:0;">📲 Tạo Mã QR Cho Bàn Ăn</h3>
+              </div>
+              <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                <div class="form-field">
+                  <label style="font-weight:600; font-size:0.85rem; color:#475569;">Chọn bàn phục vụ (*):</label>
+                  <select id="qrTableSelect" style="padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:0.9rem; background:#fff;"></select>
+                </div>
+                <button class="btn-primary" id="btnGenerateTableQr" style="padding:10px; width:100%; display:flex; justify-content:center; align-items:center; gap:6px;">
+                  ⚡ Tạo & Hiển Thị Mã QR
+                </button>
+                <div id="qrCodeDisplayBox" style="display:none; margin-top:8px;"></div>
+              </div>
+            </div>
+
+            <!-- Right Card: Hàng chờ duyệt đơn gọi món -->
+            <div class="data-card">
+              <div class="data-card-header">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <h3 style="margin:0;">🛎️ Hàng Chờ Khách Gọi Món QR</h3>
+                  <span id="qrPendingCountBadge" class="badge-tag pending">0 yêu cầu</span>
+                </div>
+                <button class="btn-action-sm" id="btnRefreshQrQueue" title="Làm mới hàng chờ">🔄 Làm Mới</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:70px;">Mã Đơn</th>
+                      <th style="width:90px;">Bàn</th>
+                      <th>Khách Hàng</th>
+                      <th>Món Đã Đặt</th>
+                      <th>Thời Gian Gọi</th>
+                      <th style="width:130px;">Hành Động</th>
+                    </tr>
+                  </thead>
+                  <tbody id="qrPendingOrdersTableBody">
+                    <tr><td colspan="6" align="center" style="padding:24px; color:#94a3b8;">Không có yêu cầu gọi món QR nào đang chờ</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="page-view" id="loyaltyPageView">
+            <section class="page-view" id="loyaltyPageView">
         <div class="admin-container">
-          <div class="data-card">
-            <div class="data-card-header"><h3>Điểm thưởng khách hàng</h3></div>
-            <div style="display:flex;gap:8px;padding:12px;flex-wrap:wrap">
-              <input id="opLoyaltyCustomer" type="number" min="1" placeholder="Mã khách hàng">
-              <button id="opLoadLoyalty" class="btn-primary">Xem lịch sử</button>
-              <select id="opRewardSelect"></select><button id="opRedeemReward" class="btn-primary">Đổi phần thưởng</button>
-              <input id="opRewardName" placeholder="Tên phần thưởng"><input id="opRewardCost" type="number" min="1" placeholder="Điểm quy đổi">
-              <button id="opAddReward" class="btn-primary">Tạo phần thưởng</button>
-            </div><div id="opLoyaltyHistory"></div>
+          <div style="display:grid; grid-template-columns: 420px 1fr; gap:20px; align-items:start;">
+            <!-- Left Card: Tra cứu điểm & Đổi quà -->
+            <div class="data-card">
+              <div class="data-card-header">
+                <h3 style="margin:0;">⭐ Tích Điểm & Đổi Thưởng</h3>
+                <button class="btn-action-sm" id="btnRefreshLoyalty">🔄 Làm Mới</button>
+              </div>
+              <div style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+                <div class="form-field">
+                  <label style="font-weight:600; font-size:0.85rem; color:#475569;">Chọn khách hàng kiểm tra:</label>
+                  <select id="loyaltyCustomerSelect" style="padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:0.9rem; background:#fff;"></select>
+                </div>
+
+                <!-- Customer Loyalty Summary Box -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+                  <div style="font-size:0.85rem; color:#64748b; margin-bottom:4px;">Khách hàng:</div>
+                  <div id="loyaltyCustomerNameDisplay" style="font-weight:700; color:var(--text-primary); font-size:1.05rem;">Vui lòng chọn khách hàng</div>
+                  <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1;">
+                    <div>
+                      <div style="font-size:0.8rem; color:#64748b;">Hạng thành viên</div>
+                      <div id="loyaltyCustomerTierDisplay" style="font-weight:700; color:var(--primary-accent-hover, #d97706);">--</div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div style="font-size:0.8rem; color:#64748b;">Điểm khả dụng</div>
+                      <div id="loyaltyPointsBalance" style="font-size:1.25rem; font-weight:800; color:#10b981;">0 ⭐</div>
+                    </div>
+                  </div>
+                  <button class="btn-primary" id="btnOpenRedeemRewardModal" disabled style="width:100%; margin-top:16px; padding:10px; background:#d97706;">
+                    🎁 Đổi Phần Thưởng Cho Khách
+                  </button>
+                </div>
+
+                <!-- Loyalty History Table -->
+                <h4 style="font-size:0.9rem; font-weight:700; margin:4px 0 0; color:#475569;">Lịch sử tích / trừ điểm gần nhất:</h4>
+                <div style="max-height:220px; overflow-y:auto; border:1px solid var(--border-color); border-radius:8px;">
+                  <table class="data-table" style="font-size:0.82rem;">
+                    <thead>
+                      <tr>
+                        <th>Thời Gian</th>
+                        <th>Loại</th>
+                        <th>Điểm</th>
+                        <th>Mô Tả</th>
+                      </tr>
+                    </thead>
+                    <tbody id="loyaltyHistoryTableBody">
+                      <tr><td colspan="4" align="center" style="padding:16px; color:#94a3b8;">Chọn khách hàng để xem lịch sử</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Card: Quản lý danh mục quà tặng -->
+            <div class="data-card">
+              <div class="data-card-header">
+                <h3 style="margin:0;">🎁 Danh Mục Phần Thưởng Đổi Điểm</h3>
+                <button class="btn-primary" id="btnOpenAddRewardModal">➕ Tạo Phần Thưởng Mới</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="width:70px;">Mã Quà</th>
+                      <th>Tên Phần Thưởng</th>
+                      <th>Điểm Cần Đổi</th>
+                      <th>Mô Tả Chi Tiết</th>
+                      <th>Trạng Thái</th>
+                      <th style="width:90px;">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rewardsTableBody">
+                    <tr><td colspan="6" align="center" style="padding:20px; color:#64748b;">⏳ Đang tải danh sách phần thưởng...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -684,6 +932,257 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  
+  <!-- ================= MODAL ĐẶT BÀN ================= -->
+  <div class="modal-backdrop" id="addReservationModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>🗓️ Tạo Lịch Đặt Bàn Trước</h3>
+        <button class="btn-close" id="btnCloseReservationModal">&times;</button>
+      </div>
+      <form id="formAddReservation">
+        <div class="modal-body">
+          <div class="form-field">
+            <label>Bàn phục vụ (*):</label>
+            <select id="resModalTableSelect" required style="padding:8px 12px; border:1px solid var(--border-color); border-radius:6px;"></select>
+          </div>
+          <div class="form-field">
+            <label>Tên khách hàng (*):</label>
+            <input type="text" id="resModalCustomerName" required placeholder="Ví dụ: Anh Hoàng, Chị Mai...">
+          </div>
+          <div class="form-field">
+            <label>Số điện thoại liên hệ:</label>
+            <input type="tel" id="resModalCustomerPhone" placeholder="Ví dụ: 0912345678">
+          </div>
+          <div class="form-field">
+            <label>Thời gian hẹn (*):</label>
+            <input type="datetime-local" id="resModalDateTime" required>
+          </div>
+          <div class="form-field">
+            <label>Số lượng khách (người):</label>
+            <input type="number" id="resModalPartySize" min="1" value="2">
+          </div>
+          <div class="form-field">
+            <label>Ghi chú đặt bàn:</label>
+            <textarea id="resModalNote" rows="2" placeholder="Ví dụ: Đặt bàn view cửa sổ, mang sẵn bánh kem..."></textarea>
+          </div>
+        </div>
+        <div class="modal-foot" style="display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn-action-sm" id="btnCancelReservationModal">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary">Xác Nhận Đặt Bàn</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL MỞ CA LÀM VIỆC ================= -->
+  <div class="modal-backdrop" id="openShiftModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>🟢 Mở Ca Làm Việc Mới</h3>
+        <button class="btn-close" id="btnCloseOpenShiftModal">&times;</button>
+      </div>
+      <form id="formOpenShift">
+        <div class="modal-body">
+          <div class="form-field">
+            <label>Nhân viên mở ca:</label>
+            <div id="openShiftEmpName" style="padding:8px 12px; background:#f1f5f9; border-radius:6px; font-weight:700;">Nhân viên</div>
+          </div>
+          <div class="form-field">
+            <label>Tiền mặt ban đầu trong két (VNĐ) (*):</label>
+            <input type="number" id="openShiftCashInput" min="0" step="1000" value="500000" placeholder="Nhập số tiền mặt đầu ca" required>
+            <small style="color:#64748b;">Số tiền mặt có sẵn trong két để thối tiền cho khách.</small>
+          </div>
+        </div>
+        <div class="modal-foot" style="display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn-action-sm" id="btnCancelOpenShiftModal">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary" style="background:#10b981;">Xác Nhận Mở Ca</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL ĐÓNG CA & ĐỐI SOÁT ================= -->
+  <div class="modal-backdrop" id="closeShiftModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>🔴 Đóng Ca & Đối Soát Tiền Mặt Két</h3>
+        <button class="btn-close" id="btnCloseCloseShiftModal">&times;</button>
+      </div>
+      <form id="formCloseShift">
+        <div class="modal-body">
+          <div class="form-field">
+            <label>Chọn ca cần đóng (*):</label>
+            <select id="closeShiftModalSelect" required style="padding:8px 12px; border:1px solid var(--border-color); border-radius:6px;"></select>
+          </div>
+          <div class="form-field">
+            <label>Tiền mặt thực tế đếm được trong két (VNĐ) (*):</label>
+            <input type="number" id="closeShiftCashInput" min="0" step="1000" placeholder="Đếm tổng tiền mặt trong két và nhập vào" required>
+            <small style="color:#64748b;">Hệ thống sẽ tự động so khớp với tiền đầu ca + doanh thu tiền mặt để tính chênh lệch.</small>
+          </div>
+          <div class="form-field">
+            <label>Ghi chú đối soát (nếu có chênh lệch):</label>
+            <textarea id="closeShiftNoteInput" rows="2" placeholder="Ví dụ: Thiếu 20k do thối nhầm khách quen..."></textarea>
+          </div>
+        </div>
+        <div class="modal-foot" style="display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn-action-sm" id="btnCancelCloseShiftModal">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary" style="background:#ef4444;">Đóng Ca & Chốt Sổ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL GHI CHI PHÍ & NHẬP HÀNG ================= -->
+  <div class="modal-backdrop" id="addExpenseModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>💸 Ghi Nhận Chi Phí / Nhập Kho</h3>
+        <button class="btn-close" id="btnCloseExpenseModal">&times;</button>
+      </div>
+      <form id="formAddExpense">
+        <div class="modal-body">
+          <div class="form-field">
+            <label>Nội dung chi phí (*):</label>
+            <input type="text" id="expenseModalDesc" required placeholder="Ví dụ: Mua sữa đặc Ông Thọ, Tiền điện tháng 10...">
+          </div>
+          <div class="form-field">
+            <label>Danh mục chi phí (*):</label>
+            <input type="text" id="expenseModalCategory" required placeholder="Ví dụ: Nhập hàng, Điện nước, Mặt bằng, Tiếp thị...">
+          </div>
+          <div class="form-field">
+            <label>Số tiền chi (VNĐ) (*):</label>
+            <input type="number" id="expenseModalAmount" min="1000" step="1000" required placeholder="Ví dụ: 350000">
+          </div>
+          <div class="form-field">
+            <label>Phương thức thanh toán:</label>
+            <select id="expenseModalPaymentMethod" style="padding:8px 12px; border:1px solid var(--border-color); border-radius:6px;">
+              <option value="CASH">💵 Tiền mặt</option>
+              <option value="BANK_TRANSFER">🏦 Chuyển khoản ngân hàng</option>
+              <option value="CARD">💳 Thẻ ngân hàng</option>
+              <option value="E_WALLET">📱 Ví điện tử</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Nhà cung cấp (tùy chọn):</label>
+            <select id="expenseModalSupplierSelect" style="padding:8px 12px; border:1px solid var(--border-color); border-radius:6px;"></select>
+          </div>
+          <div class="form-field">
+            <label>Liên kết nhập kho nguyên liệu (tùy chọn):</label>
+            <select id="expenseModalIngredientSelect" style="padding:8px 12px; border:1px solid var(--border-color); border-radius:6px;"></select>
+          </div>
+          <div class="form-field">
+            <label>Số lượng nhập vào kho (nếu có):</label>
+            <input type="number" id="expenseModalStockQty" min="0.001" step="0.001" placeholder="Ví dụ: 10 (kg/hộp)">
+          </div>
+        </div>
+        <div class="modal-foot" style="display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn-action-sm" id="btnCancelExpenseModal">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary">Ghi Nhận Khoản Chi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL NHÀ CUNG CẤP ================= -->
+  <div class="modal-backdrop" id="supplierModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3 id="supplierModalTitle">🚚 Thêm Nhà Cung Cấp Mới</h3>
+        <button class="btn-close" id="btnCloseSupplierModal">&times;</button>
+      </div>
+      <form id="formSupplier">
+        <div class="modal-body">
+          <input type="hidden" id="supplierModalId">
+          <div class="form-field">
+            <label>Tên nhà cung cấp / Công ty (*):</label>
+            <input type="text" id="supplierModalName" required placeholder="Ví dụ: Công ty TNHH Cà Phê Robusta Bảo Lộc">
+          </div>
+          <div class="form-field">
+            <label>Người đại diện liên hệ:</label>
+            <input type="text" id="supplierModalContact" placeholder="Ví dụ: Anh Nam (Sale)">
+          </div>
+          <div class="form-field">
+            <label>Số điện thoại:</label>
+            <input type="tel" id="supplierModalPhone" placeholder="Ví dụ: 0988776655">
+          </div>
+          <div class="form-field">
+            <label>Email liên hệ:</label>
+            <input type="email" id="supplierModalEmail" placeholder="Ví dụ: supplier@gmail.com">
+          </div>
+          <div class="form-field">
+            <label>Địa chỉ kho bãi / Giao hàng:</label>
+            <input type="text" id="supplierModalAddress" placeholder="Ví dụ: 123 Quốc lộ 20, Lâm Đồng">
+          </div>
+        </div>
+        <div class="modal-foot" style="display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn-action-sm" id="btnCancelSupplierModal">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary">Lưu Nhà Cung Cấp</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL PHẦN THƯỞNG ================= -->
+  <div class="modal-backdrop" id="rewardModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3 id="rewardModalTitle">🎁 Thêm Phần Thưởng Mới</h3>
+        <button class="btn-close" id="btnCloseRewardModal">&times;</button>
+      </div>
+      <form id="formReward">
+        <div class="modal-body">
+          <input type="hidden" id="rewardModalId">
+          <div class="form-field">
+            <label>Tên phần thưởng (*):</label>
+            <input type="text" id="rewardModalName" required placeholder="Ví dụ: Ly Cà Phê Sữa Miễn Phí, Bình Giữ Nhiệt...">
+          </div>
+          <div class="form-field">
+            <label>Số điểm quy đổi (*):</label>
+            <input type="number" id="rewardModalCost" min="1" required placeholder="Ví dụ: 50">
+          </div>
+          <div class="form-field">
+            <label>Mô tả chi tiết:</label>
+            <textarea id="rewardModalDesc" rows="2" placeholder="Áp dụng cho size M, không đổi thành tiền mặt..."></textarea>
+          </div>
+          <div class="form-field" style="flex-direction:row; align-items:center; gap:8px; margin-top:4px;">
+            <input type="checkbox" id="rewardModalActive" checked style="width:18px; height:18px; cursor:pointer;">
+            <label for="rewardModalActive" style="cursor:pointer; margin:0;">Kích hoạt phần thưởng cho phép khách đổi</label>
+          </div>
+        </div>
+        <div class="modal-foot" style="display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn-action-sm" id="btnCancelRewardModal">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary">Lưu Phần Thưởng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL ĐỔI QUÀ CHO KHÁCH HÀNG ================= -->
+  <div class="modal-backdrop" id="redeemRewardModal">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3>🎁 Đổi Phần Thưởng Tích Điểm</h3>
+        <button class="btn-close" id="btnCloseRedeemRewardModal">&times;</button>
+      </div>
+      <form id="formRedeemReward">
+        <div class="modal-body">
+          <div class="form-field">
+            <label>Chọn phần thưởng muốn đổi (*):</label>
+            <select id="redeemModalSelectReward" required style="padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:0.9rem;"></select>
+          </div>
+          <p style="font-size:0.85rem; color:#64748b; margin:0;">
+            Khi bấm xác nhận, hệ thống sẽ tự động trừ điểm tích lũy của khách hàng và ghi nhận lịch sử giao dịch.
+          </p>
+        </div>
+        <div class="modal-foot" style="display:flex; justify-content:flex-end; gap:8px; padding:16px 20px; border-top:1px solid var(--border-color);">
+          <button type="button" class="btn-action-sm" id="btnCancelRedeemRewardModal">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary" style="background:#d97706;">Xác Nhận Đổi Quà</button>
+        </div>
+      </form>
     </div>
   </div>
 

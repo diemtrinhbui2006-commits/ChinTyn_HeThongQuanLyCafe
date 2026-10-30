@@ -15,15 +15,14 @@ import { initAuthEvents } from './modules/authModule.js';
 import { showToast } from './utils/toast.js';
 import { loadOperations, initOperationsEvents } from './modules/operationsModule.js';
 
-const operationsPages = new Set([
-  'inventory',
-  'reservations',
-  'shifts',
-  'suppliers',
-  'promotions',
-  'qr-orders',
-  'loyalty',
-]);
+// Dedicated modern feature modules
+import { loadReservations, initReservationEvents } from './modules/reservationModule.js';
+import { loadShifts, initShiftEvents } from './modules/shiftModule.js';
+import { loadSupplierExpenses, initSupplierExpenseEvents } from './modules/supplierExpenseModule.js';
+import { loadQrManagement, initQrEvents } from './modules/qrModule.js';
+import { loadLoyalty, initLoyaltyEvents } from './modules/loyaltyModule.js';
+
+const legacyOperationsPages = new Set(['inventory', 'promotions']);
 
 document.addEventListener('DOMContentLoaded', async () => {
   initClock();
@@ -42,6 +41,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTableAdminEvents();
   initCategoryAdminEvents();
   initCustomerAdminEvents();
+
+  // Khởi tạo các sự kiện modal cho 5 tính năng mới
+  initReservationEvents();
+  initShiftEvents();
+  initSupplierExpenseEvents();
+  initQrEvents();
+  initLoyaltyEvents();
 });
 
 // Đồng hồ thời gian thực
@@ -94,14 +100,19 @@ function initNavigation() {
 
       // Gọi module tương ứng nạp dữ liệu
       if (target === 'pos') loadPosData();
-      if (target === 'dashboard') loadDashboard();
-      if (target === 'orders') loadOrdersHistory();
-      if (target === 'products') loadProductsAdmin();
-      if (target === 'categories') loadCategoriesAdmin();
-      if (target === 'tables') loadTablesAdmin();
-      if (target === 'customers') loadCustomersAdmin();
-      if (target === 'users') loadUsersAdmin();
-      if (operationsPages.has(target)) loadOperations();
+      else if (target === 'dashboard') loadDashboard();
+      else if (target === 'orders') loadOrdersHistory();
+      else if (target === 'products') loadProductsAdmin();
+      else if (target === 'categories') loadCategoriesAdmin();
+      else if (target === 'tables') loadTablesAdmin();
+      else if (target === 'customers') loadCustomersAdmin();
+      else if (target === 'users') loadUsersAdmin();
+      else if (target === 'reservations') loadReservations();
+      else if (target === 'shifts') loadShifts();
+      else if (target === 'suppliers') loadSupplierExpenses();
+      else if (target === 'qr-orders') loadQrManagement();
+      else if (target === 'loyalty') loadLoyalty();
+      else if (legacyOperationsPages.has(target)) loadOperations();
     });
   });
 }
@@ -114,7 +125,12 @@ function initGlobalRefresh() {
       const activeNav = document.querySelector('.nav-item.active')?.dataset.page;
       if (activeNav === 'orders') await loadOrdersHistory();
       else if (activeNav === 'dashboard') await loadDashboard();
-      else if (operationsPages.has(activeNav)) await loadOperations();
+      else if (activeNav === 'reservations') await loadReservations();
+      else if (activeNav === 'shifts') await loadShifts();
+      else if (activeNav === 'suppliers') await loadSupplierExpenses();
+      else if (activeNav === 'qr-orders') await loadQrManagement();
+      else if (activeNav === 'loyalty') await loadLoyalty();
+      else if (legacyOperationsPages.has(activeNav)) await loadOperations();
       else await loadPosData();
       showToast('Đã làm mới dữ liệu hệ thống!', 'success');
     });
