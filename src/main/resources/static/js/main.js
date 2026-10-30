@@ -2,7 +2,7 @@
  * MAIN ENTRYPOINT - Tích hợp toàn bộ các module giao diện
  */
 
-import { initPosModule, loadPosData } from './modules/posModule.js';
+import { initPosModule, loadPosData, showTableSelection } from './modules/posModule.js';
 import { loadDashboard } from './modules/dashboardModule.js';
 import { loadProductsAdmin, initProductModalEvents } from './modules/productModule.js';
 import { loadTablesAdmin, initTableAdminEvents } from './modules/tableModule.js';
@@ -62,59 +62,60 @@ function initClock() {
   setInterval(tick, 1000);
 }
 
-// Chuyển trang qua thanh Sidebar
-function initNavigation() {
-  const navItems = document.querySelectorAll('.nav-item');
-  navItems.forEach(item => {
-    item.addEventListener('click', () => {
-      navItems.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
 
-      const target = item.dataset.page;
-
-      // Ẩn tất cả trang và hiện trang được chọn
-      document.querySelectorAll('.page-view').forEach(view => view.classList.remove('active'));
-      const activeView = document.getElementById(`${target}PageView`);
-      if (activeView) activeView.classList.add('active');
-
-      // Cập nhật tiêu đề Topbar
-      const titles = {
-        pos: '☕ Bán Hàng & Gọi Món (POS)',
-        orders: '📜 Lịch Sử Đơn Hàng',
-        tables: '🪑 Quản Lý Bàn Ăn',
-        products: '☕ Quản Lý Thực Đơn',
-        categories: '📁 Quản Lý Danh Mục',
-        dashboard: '📊 Tổng Quan Hệ Thống (Dashboard)',
-        customers: '👥 Danh Sách Khách Hàng',
-        users: '👨‍💼 Quản Lý Nhân Viên & Tài Khoản',
-        inventory: '📦 Kho Nguyên Liệu',
-        reservations: '🗓️ Quản Lý Đặt Bàn',
-        shifts: '🧾 Ca Làm Việc & Đối Soát',
-        suppliers: '🚚 Nhà Cung Cấp & Chi Phí',
-        promotions: '🎟️ Khuyến Mãi & Ưu Đãi',
-        'qr-orders': '📲 Gọi Món Qua QR',
-        loyalty: '⭐ Chương Trình Điểm Thưởng',
-      };
-      const titleEl = document.getElementById('topbarPageTitle');
-      if (titleEl) titleEl.textContent = titles[target] || 'Hệ Thống Quản Lý Cafe';
-
-      // Gọi module tương ứng nạp dữ liệu
-      if (target === 'pos') loadPosData();
-      else if (target === 'dashboard') loadDashboard();
-      else if (target === 'orders') loadOrdersHistory();
-      else if (target === 'products') loadProductsAdmin();
-      else if (target === 'categories') loadCategoriesAdmin();
-      else if (target === 'tables') loadTablesAdmin();
-      else if (target === 'customers') loadCustomersAdmin();
-      else if (target === 'users') loadUsersAdmin();
-      else if (target === 'reservations') loadReservations();
-      else if (target === 'shifts') loadShifts();
-      else if (target === 'suppliers') loadSupplierExpenses();
-      else if (target === 'qr-orders') loadQrManagement();
-      else if (target === 'loyalty') loadLoyalty();
-      else if (legacyOperationsPages.has(target)) loadOperations();
-    });
+const pageTitles = {
+  pos: 'Bán hàng (POS)', operations: 'Vận hành & Hệ thống',
+  'customer-hub': 'Khách hàng', 'menu-hub': 'Quản trị thực đơn',
+  orders: 'Lịch sử đơn hàng', tables: 'Quản lý bàn', products: 'Quản lý món',
+  categories: 'Danh mục món', dashboard: 'Tổng quan (Dashboard)', customers: 'Khách hàng',
+  users: 'Nhân viên & Tài khoản', inventory: 'Kho nguyên liệu', reservations: 'Đặt bàn',
+  shifts: 'Ca & đối soát', suppliers: 'Nhà cung cấp & chi phí', promotions: 'Khuyến mãi',
+  'qr-orders': 'Gọi món QR', loyalty: 'Điểm thưởng',
+};
+let currentPage = 'pos';
+const parentSection = page => ['products', 'categories'].includes(page) ? 'menu-hub'
+  : ['customers', 'loyalty'].includes(page) ? 'customer-hub'
+  : page === 'pos' ? 'pos' : 'operations';
+const pageLoaders = {
+  pos: loadPosData, dashboard: loadDashboard, orders: loadOrdersHistory,
+  products: loadProductsAdmin, categories: loadCategoriesAdmin, tables: loadTablesAdmin,
+  customers: loadCustomersAdmin, users: loadUsersAdmin,
+  reservations: loadReservations, shifts: loadShifts, suppliers: loadSupplierExpenses,
+  'qr-orders': loadQrManagement, loyalty: loadLoyalty,
+};
+async function refreshPage(page) {
+  const loader = pageLoaders[page] || (legacyOperationsPages.has(page) ? loadOperations : null);
+  if (loader) await loader();
+}
+async function navigateTo(target) {
+  const view = document.getElementById(target + 'PageView');
+  if (!view) return;
+  currentPage = target;
+  if (target === 'pos') showTableSelection();
+  document.querySelectorAll('.page-view').forEach(page => page.classList.toggle('active', page === view));
+  const section = ['operations', 'customer-hub', 'menu-hub', 'pos'].includes(target) ? target : parentSection(target);
+  document.querySelectorAll('.bottom-tab').forEach(tab => {
+    const active = tab.dataset.section === section;
+    tab.classList.toggle('active', active);
+    if (active) tab.setAttribute('aria-current', 'page');
+    else tab.removeAttribute('aria-current');
   });
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === target));
+  document.getElementById('topbarPageTitle').textContent = pageTitles[target];
+  document.querySelector('.section-trail').hidden = section === target;
+  document.getElementById('currentSectionName').textContent = pageTitles[section];
+  try { await refreshPage(target); }
+  catch (error) { showToast('Không thể tải ' + pageTitles[target] + ': ' + error.message, 'error'); }
+}
+function initNavigation() {
+  document.querySelectorAll('[data-page]').forEach(item => {
+    item.addEventListener('click', () => navigateTo(item.dataset.page));
+  });
+  document.querySelectorAll('.bottom-tab').forEach(tab => {
+    tab.addEventListener('click', () => navigateTo(tab.dataset.section));
+  });
+  document.getElementById('btnBackToHub').addEventListener('click', () => navigateTo(parentSection(currentPage)));
+  document.querySelector('.bottom-tab.active').setAttribute('aria-current', 'page');
 }
 
 // Nút làm mới dữ liệu
@@ -122,17 +123,10 @@ function initGlobalRefresh() {
   const refreshBtn = document.getElementById('btnRefreshAll');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', async () => {
-      const activeNav = document.querySelector('.nav-item.active')?.dataset.page;
-      if (activeNav === 'orders') await loadOrdersHistory();
-      else if (activeNav === 'dashboard') await loadDashboard();
-      else if (activeNav === 'reservations') await loadReservations();
-      else if (activeNav === 'shifts') await loadShifts();
-      else if (activeNav === 'suppliers') await loadSupplierExpenses();
-      else if (activeNav === 'qr-orders') await loadQrManagement();
-      else if (activeNav === 'loyalty') await loadLoyalty();
-      else if (legacyOperationsPages.has(activeNav)) await loadOperations();
-      else await loadPosData();
-      showToast('Đã làm mới dữ liệu hệ thống!', 'success');
+      try {
+        await refreshPage(currentPage);
+        showToast('Đã làm mới dữ liệu hệ thống!', 'success');
+      } catch (error) { showToast(error.message, 'error'); }
     });
   }
 

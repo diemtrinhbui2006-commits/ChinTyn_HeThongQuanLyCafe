@@ -1,4 +1,5 @@
 import { formatVND, formatDate } from '../utils/formatters.js';
+const escapeText = text => String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
 /**
  * Module hiển thị & in hóa đơn nhiệt tiêu chuẩn 80mm
@@ -19,7 +20,7 @@ export function openThermalReceipt(inv, tableName) {
       const lineTotal = d.lineTotal != null ? d.lineTotal : (d.totalPrice != null ? d.totalPrice : ((d.unitPrice || d.price || 0) * (d.quantity || 1)));
       rows += `
         <tr>
-          <td>${d.productName || 'Món #' + (d.productId || d.id || '')}</td>
+          <td>${escapeText(d.productName || 'Món #' + (d.productId || d.id || ''))}<br><small>${d.sugarPercent ?? 100}% đường · ${d.iceOption === 'NONE' ? 'Không đá' : 'Đá bình thường'}${d.note ? ' · ' + escapeText(d.note) : ''}</small></td>
           <td align="center">${d.quantity || 1}</td>
           <td align="right">${formatVND(lineTotal)}</td>
         </tr>

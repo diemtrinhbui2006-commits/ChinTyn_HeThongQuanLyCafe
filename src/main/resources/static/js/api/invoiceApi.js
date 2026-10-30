@@ -23,7 +23,7 @@ export const invoiceApi = {
   checkout: (id, payload) => request(`/api/invoices/${id}/checkout`, { method: 'POST', body: JSON.stringify(payload || {}) }),
 
   // 7. Xóa hoặc giảm bớt số lượng món khỏi bàn
-  removeFood: (id, productId, qty) => request(`/api/invoices/${id}/details/${productId}${qty ? `?quantity=${qty}` : ''}`, { method: 'DELETE' }),
+  removeFood: (id, productId, qty, detailId) => request(`/api/invoices/${id}/details/${productId}?quantity=${qty || 1}${detailId ? '&detailId=' + detailId : ''}`, { method: 'DELETE' }),
 
   // 8. Hủy toàn bộ hóa đơn của bàn
   cancel: (id) => request(`/api/invoices/${id}/cancel`, { method: 'POST' }),

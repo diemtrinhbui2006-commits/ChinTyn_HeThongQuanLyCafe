@@ -23,7 +23,10 @@ public class InvoiceMapper {
                 detail.getProduct() != null ? detail.getProduct().getName() : null,
                 detail.getQuantity(),
                 detail.getUnitPrice(),
-                detail.getLineTotal()
+                detail.getLineTotal(),
+                detail.getSugarPercent() == null ? 100 : detail.getSugarPercent(),
+                detail.getIceOption() == null ? "NORMAL" : detail.getIceOption(),
+                detail.getNote() == null ? "" : detail.getNote()
         );
     }
 

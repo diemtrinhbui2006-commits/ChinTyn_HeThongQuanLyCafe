@@ -112,9 +112,10 @@ public class InvoiceController {
     public InvoiceResponse removeFood(
             @PathVariable Long id,
             @PathVariable Long productId,
-            @RequestParam(required = false) Integer quantity
+            @RequestParam(required = false) Integer quantity,
+            @RequestParam(required = false) Long detailId
     ) {
-        Invoice invoice = invoiceService.removeFoodFromInvoice(id, productId, quantity);
+        Invoice invoice = invoiceService.removeFoodFromInvoice(id, productId, quantity, detailId);
         return invoiceMapper.toResponse(invoice);
     }
 

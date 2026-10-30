@@ -8,6 +8,9 @@ public record InvoiceDetailResponse(
         String productName,
         Integer quantity,
         BigDecimal unitPrice,
-        BigDecimal lineTotal
+        BigDecimal lineTotal,
+        Integer sugarPercent,
+        String iceOption,
+        String note
 ) {
 }

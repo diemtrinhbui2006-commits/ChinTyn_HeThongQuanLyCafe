@@ -5,91 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ChinTyn Coffee - Hệ Thống Quản Lý Bán Hàng & POS</title>
   <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/components/navigation.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
 </head>
 <body>
 
   <!-- ================= SIDEBAR (GIỐNG HỆ THỐNG QUÁN CAFE) ================= -->
-  <aside class="app-sidebar">
-    <div class="brand-section">
+<div class="app-identity"><div class="brand-section">
       <div class="brand-icon">☕</div>
       <div class="brand-info">
         <h2>CHINTYN COFFEE</h2>
         <p>Management System</p>
       </div>
-    </div>
-
-    <!-- Navigation List -->
-    <nav class="sidebar-nav">
-      <div class="nav-category">Bán Hàng & Vận Hành</div>
-      <a class="nav-item active" data-page="pos">
-        <span class="icon">🛒</span>
-        <span>Bán hàng (POS)</span>
-      </a>
-      <a class="nav-item" data-page="orders">
-        <span class="icon">📜</span>
-        <span>Lịch sử đơn hàng</span>
-      </a>
-      <a class="nav-item" data-page="tables">
-        <span class="icon">🪑</span>
-        <span>Quản lý bàn</span>
-      </a>
-      <a class="nav-item" data-page="inventory">
-        <span class="icon">📦</span>
-        <span>Kho nguyên liệu</span>
-      </a>
-      <a class="nav-item" data-page="reservations">
-        <span class="icon">🗓️</span>
-        <span>Đặt bàn</span>
-      </a>
-      <a class="nav-item" data-page="shifts">
-        <span class="icon">🧾</span>
-        <span>Ca & đối soát</span>
-      </a>
-      <a class="nav-item" data-page="suppliers">
-        <span class="icon">🚚</span>
-        <span>Nhà cung cấp & chi phí</span>
-      </a>
-      <a class="nav-item" data-page="promotions">
-        <span class="icon">🎟️</span>
-        <span>Khuyến mãi</span>
-      </a>
-      <a class="nav-item" data-page="qr-orders">
-        <span class="icon">📲</span>
-        <span>Gọi món QR</span>
-      </a>
-      <a class="nav-item" data-page="loyalty">
-        <span class="icon">⭐</span>
-        <span>Điểm thưởng</span>
-      </a>
-
-      <div class="nav-category">Quản Trị Thực Đơn</div>
-      <a class="nav-item" data-page="products">
-        <span class="icon">☕</span>
-        <span>Quản lý món</span>
-      </a>
-      <a class="nav-item" data-page="categories">
-        <span class="icon">📁</span>
-        <span>Danh mục món</span>
-      </a>
-
-      <div class="nav-category">Hệ Thống & Khách Hàng</div>
-      <a class="nav-item" data-page="dashboard">
-        <span class="icon">📊</span>
-        <span>Tổng quan (Dashboard)</span>
-      </a>
-      <a class="nav-item" data-page="customers">
-        <span class="icon">👥</span>
-        <span>Khách hàng</span>
-      </a>
-      <a class="nav-item" data-page="users">
-        <span class="icon">👨‍💼</span>
-        <span>Nhân viên & Tài khoản</span>
-      </a>
-    </nav>
-
-    <!-- User Profile Card in Sidebar -->
-    <div class="user-profile-card">
+    </div>    <div class="user-profile-card">
       <div class="user-avatar" id="sidebarUserAvatar">QT</div>
       <div class="user-details">
         <div class="user-name" id="sidebarUserName">Nguyễn Quản Trị</div>
@@ -100,7 +28,7 @@
         <span>Thoát</span>
       </button>
     </div>
-  </aside>
+</div>
 
   <!-- ================= MAIN WRAPPER ================= -->
   <div class="app-main">
@@ -127,17 +55,19 @@
       </div>
     </header>
 
+<div class="section-trail" hidden><button type="button" id="btnBackToHub">‹ Quay lại</button><span id="currentSectionName"></span></div>
     <!-- CONTENT AREA -->
-    <div class="content-area">
+    <div class="content-area"><section class="page-view hub-view" id="operationsPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><h2>Vận hành & Hệ thống</h2><span>Các công cụ quản lý quán trong một nơi</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="orders"><span class="feature-icon">📜</span><span class="feature-label">Lịch sử đơn hàng</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="tables"><span class="feature-icon">🪑</span><span class="feature-label">Quản lý bàn</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="inventory"><span class="feature-icon">📦</span><span class="feature-label">Kho nguyên liệu</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="reservations"><span class="feature-icon">🗓️</span><span class="feature-label">Đặt bàn</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="shifts"><span class="feature-icon">🧾</span><span class="feature-label">Ca & đối soát</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="suppliers"><span class="feature-icon">🚚</span><span class="feature-label">Nhà cung cấp & chi phí</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="promotions"><span class="feature-icon">🎟️</span><span class="feature-label">Khuyến mãi</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="qr-orders"><span class="feature-icon">📲</span><span class="feature-label">Gọi món QR</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="dashboard"><span class="feature-icon">📊</span><span class="feature-label">Tổng quan (Dashboard)</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="users"><span class="feature-icon">👨‍💼</span><span class="feature-label">Nhân viên & Tài khoản</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section><section class="page-view hub-view" id="customer-hubPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><h2>Khách hàng</h2><span>Chăm sóc khách hàng và chương trình thành viên</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="customers"><span class="feature-icon">👥</span><span class="feature-label">Khách hàng</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="loyalty"><span class="feature-icon">⭐</span><span class="feature-label">Điểm thưởng</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section><section class="page-view hub-view" id="menu-hubPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><h2>Quản trị thực đơn</h2><span>Cập nhật món và sắp xếp danh mục thực đơn</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="products"><span class="feature-icon">☕</span><span class="feature-label">Quản lý món</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="categories"><span class="feature-icon">📁</span><span class="feature-label">Danh mục món</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section>
 
       <!-- ================= 1. POS PAGE (BÁN HÀNG) ================= -->
       <section class="page-view active" id="posPageView">
         <div class="pos-container">
+<div class="pos-order-toolbar"><button type="button" id="btnChooseAnotherTable">‹ Chọn bàn khác</button><strong id="posSelectedTableName"></strong><span>Chọn danh mục hoặc tìm tên món để gọi món</span></div>
 
           <!-- CỘT 1: SƠ ĐỒ BÀN -->
           <div class="tables-panel">
             <div class="panel-header">
-              <h3>Sơ Đồ Bàn Ăn</h3>
+              <div><h3>Chọn bàn phục vụ</h3><p class="table-step-hint">Chọn một bàn để xem thực đơn và bắt đầu gọi món</p></div>
             </div>
             <div class="table-filter-pills">
               <span class="filter-pill active" data-filter="ALL">Tất cả</span>
@@ -156,10 +86,9 @@
                 <span class="search-icon">🔍</span>
                 <input type="text" id="productSearchInput" placeholder="Tìm kiếm món ăn, đồ uống theo tên...">
               </div>
-              <div class="categories-bar" id="categoriesBar">
-                <!-- Render động -->
-              </div>
+
             </div>
+            <div class="categories-bar" id="categoriesBar" aria-label="Lọc món theo danh mục"></div>
             <div class="products-grid" id="productsGrid">
               <!-- Render động -->
             </div>
@@ -1186,6 +1115,21 @@
     </div>
   </div>
 
+<nav class="bottom-navigation" aria-label="Điều hướng chính"><button type="button" class="bottom-tab active" data-section="pos"><span>🛒</span><span>Bán hàng</span></button><button type="button" class="bottom-tab" data-section="customer-hub"><span>👥</span><span>Khách hàng</span></button><button type="button" class="bottom-tab" data-section="menu-hub"><span>☕</span><span>Quản trị thực đơn</span></button><button type="button" class="bottom-tab" data-section="operations"><span>▦</span><span>Vận hành &amp; Hệ thống</span></button></nav>
+<dialog id="productOptionsDialog" class="product-options-dialog" aria-labelledby="productOptionsTitle">
+<form id="productOptionsForm">
+<header><div><p>TÙY CHỌN MÓN</p><h2 id="productOptionsTitle"></h2></div><button type="button" id="btnCloseProductOptions" aria-label="Đóng">×</button></header>
+<label class="option-field">Số lượng<input id="optionQuantity" type="number" min="1" step="1" value="1" required></label>
+<fieldset><legend>Mức đường</legend><div class="option-choices">
+<label><input type="radio" name="sugar" value="100" checked><span>Bình thường</span></label>
+<label><input type="radio" name="sugar" value="70"><span>70%</span></label>
+<label><input type="radio" name="sugar" value="50"><span>50%</span></label>
+<label><input type="radio" name="sugar" value="30"><span>30%</span></label>
+</div></fieldset>
+<fieldset><legend>Lượng đá</legend><div class="option-choices"><label><input type="radio" name="ice" value="NORMAL" checked><span>Đá bình thường</span></label><label><input type="radio" name="ice" value="NONE"><span>Không đá</span></label></div></fieldset>
+<label class="option-field">Ghi chú cho món<textarea id="optionNote" maxlength="500" rows="3" placeholder="Ví dụ: để riêng sữa, ít ngọt..."></textarea></label>
+<p id="productOptionsError" role="alert"></p><footer><button type="button" id="btnCancelProductOptions">Hủy</button><button type="submit" id="btnCompleteProductOptions">Hoàn tất</button></footer>
+</form></dialog>
   <!-- Toast Container -->
   <div class="toast-box" id="toastContainer"></div>
 
