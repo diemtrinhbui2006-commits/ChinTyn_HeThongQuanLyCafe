@@ -6,9 +6,10 @@
   <title>ChinTyn Coffee - Hệ Thống Quản Lý Bán Hàng & POS</title>
   <link rel="stylesheet" href="/css/style.css">
 <link rel="stylesheet" href="/css/components/navigation.css">
+<link rel="stylesheet" href="/css/components/management.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
 </head>
-<body>
+<body class="auth-required">
 
   <!-- ================= SIDEBAR (GIỐNG HỆ THỐNG QUÁN CAFE) ================= -->
 <div class="app-identity"><div class="brand-section">
@@ -57,7 +58,7 @@
 
 <div class="section-trail" hidden><button type="button" id="btnBackToHub">‹ Quay lại</button><span id="currentSectionName"></span></div>
     <!-- CONTENT AREA -->
-    <div class="content-area"><section class="page-view hub-view" id="operationsPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><div class="operations-heading-row"><h2>Vận hành & Hệ thống</h2><button type="button" id="btnQuickShift" class="quick-shift" disabled>Đang tải ca...</button></div><span>Các công cụ quản lý quán trong một nơi</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="connections"><span class="feature-icon">🔗</span><span class="feature-label">Quản lí kết nối</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="orders"><span class="feature-icon">📜</span><span class="feature-label">Lịch sử đơn hàng</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="tables"><span class="feature-icon">🪑</span><span class="feature-label">Quản lý bàn</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="inventory"><span class="feature-icon">📦</span><span class="feature-label">Kho nguyên liệu</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="reservations"><span class="feature-icon">🗓️</span><span class="feature-label">Đặt bàn</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="shifts"><span class="feature-icon">🧾</span><span class="feature-label">Ca & đối soát</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="suppliers"><span class="feature-icon">🚚</span><span class="feature-label">Nhà cung cấp & chi phí</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="promotions"><span class="feature-icon">🎟️</span><span class="feature-label">Khuyến mãi</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="qr-orders"><span class="feature-icon">📲</span><span class="feature-label">Gọi món QR</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="dashboard"><span class="feature-icon">📊</span><span class="feature-label">Tổng quan (Dashboard)</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="users"><span class="feature-icon">👨‍💼</span><span class="feature-label">Nhân viên & Tài khoản</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section><section class="page-view hub-view" id="customer-hubPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><h2>Khách hàng</h2><span>Chăm sóc khách hàng và chương trình thành viên</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="customers"><span class="feature-icon">👥</span><span class="feature-label">Khách hàng</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="loyalty"><span class="feature-icon">⭐</span><span class="feature-label">Điểm thưởng</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section><section class="page-view hub-view" id="menu-hubPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><h2>Quản trị thực đơn</h2><span>Cập nhật món và sắp xếp danh mục thực đơn</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="products"><span class="feature-icon">☕</span><span class="feature-label">Quản lý món</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="categories"><span class="feature-icon">📁</span><span class="feature-label">Danh mục món</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section>
+    <div class="content-area"><section class="page-view hub-view" id="operationsPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><div class="operations-heading-row"><h2>Vận hành & Hệ thống</h2><button type="button" id="btnQuickShift" data-cashier-only class="quick-shift" disabled>Đang tải ca...</button></div><span>Các công cụ quản lý quán trong một nơi</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="connections"><span class="feature-icon">🔗</span><span class="feature-label">Quản lí kết nối</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="orders"><span class="feature-icon">📜</span><span class="feature-label">Lịch sử đơn hàng</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="tables"><span class="feature-icon">🪑</span><span class="feature-label">Quản lý bàn</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="inventory"><span class="feature-icon">📦</span><span class="feature-label">Kho nguyên liệu</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="reservations"><span class="feature-icon">🗓️</span><span class="feature-label">Đặt bàn</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="shifts"><span class="feature-icon">🧾</span><span class="feature-label">Ca & đối soát</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="suppliers"><span class="feature-icon">🚚</span><span class="feature-label">Nhà cung cấp & chi phí</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="promotions"><span class="feature-icon">🎟️</span><span class="feature-label">Khuyến mãi</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="qr-orders"><span class="feature-icon">📲</span><span class="feature-label">Gọi món QR</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="dashboard"><span class="feature-icon">📊</span><span class="feature-label">Tổng quan (Dashboard)</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="users"><span class="feature-icon">👨‍💼</span><span class="feature-label">Nhân viên & Tài khoản</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section><section class="page-view hub-view" id="customer-hubPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><h2>Khách hàng</h2><span>Chăm sóc khách hàng và chương trình thành viên</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="customers"><span class="feature-icon">👥</span><span class="feature-label">Khách hàng</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="loyalty"><span class="feature-icon">⭐</span><span class="feature-label">Điểm thưởng</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section><section class="page-view hub-view" id="menu-hubPageView"><div class="hub-heading"><p>CHINTYN COFFEE</p><h2>Quản trị thực đơn</h2><span>Cập nhật món và sắp xếp danh mục thực đơn</span></div><div class="feature-grid"><button type="button" class="nav-item feature-tile" data-page="products"><span class="feature-icon">☕</span><span class="feature-label">Quản lý món</span><span class="feature-arrow" aria-hidden="true">›</span></button><button type="button" class="nav-item feature-tile" data-page="categories"><span class="feature-icon">📁</span><span class="feature-label">Danh mục món</span><span class="feature-arrow" aria-hidden="true">›</span></button></div></section>
 
 <section class="page-view hub-view" id="connectionsPageView"><div class="hub-heading"><p>KẾT NỐI NHÂN VIÊN</p><h2>Quản lí kết nối</h2><span>Quét mã trên điện thoại để mở POS và đăng nhập bằng tài khoản nhân viên.</span></div><div class="connection-layout"><div class="connection-qr-card"><h3>QR kết nối máy POS</h3><p id="connectionStatus" role="status">Đang tìm địa chỉ kết nối...</p><img id="posConnectionQr" width="320" height="320" alt="QR mở trang đăng nhập POS trên điện thoại" hidden><label for="connectionAddressSelect">Mạng kết nối</label><select id="connectionAddressSelect" hidden></select><label for="posConnectionUrl">Địa chỉ truy cập</label><input id="posConnectionUrl" readonly placeholder="Chưa có địa chỉ mạng"><div class="connection-actions"><button type="button" id="btnCopyPosUrl" disabled>Sao chép địa chỉ</button><button type="button" id="btnRefreshConnection">Tải lại QR</button></div></div><div class="connection-instructions"><h3>Gọi món bằng điện thoại</h3><ol><li>Kết nối điện thoại và máy POS vào cùng mạng Wi-Fi/LAN.</li><li>Mở camera điện thoại và quét mã QR bên cạnh.</li><li>Đăng nhập bằng tài khoản nhân viên được cấp.</li><li>Chọn bàn, chọn món và bấm Hoàn tất. Món được lưu vào hóa đơn chung của bàn.</li></ol><p>Mã QR chỉ chứa địa chỉ mở POS, không chứa mật khẩu và không tự đăng nhập.</p><p>Nếu máy có nhiều kết nối, hãy chọn đúng mạng Wi-Fi/LAN. Nếu điện thoại chưa truy cập được, kiểm tra địa chỉ IP, cổng 8080 và quyền truy cập mạng của Java trên máy POS.</p></div></div></section>
       <!-- ================= 1. POS PAGE (BÁN HÀNG) ================= -->
@@ -106,7 +107,7 @@
               <div class="empty-cart-msg">Chọn một bàn để bắt đầu gọi món!</div>
             </div>
 
-            <div class="cart-review-footer"><div><span>Tổng tiền món</span><strong id="reviewCartTotal">0 ₫</strong></div><button type="button" id="btnConfirmCart" disabled>Xác nhận món · Tiếp tục thanh toán →</button></div>
+            <div class="cart-review-footer"><div><span>Tổng tiền món</span><strong id="reviewCartTotal">0 ₫</strong></div><p id="staffOrderHint" hidden>Món đã gửi vào hóa đơn bàn. Thu ngân sẽ thực hiện thanh toán.</p><button type="button" id="btnConfirmCart" data-cashier-only disabled>Xác nhận món · Tiếp tục thanh toán →</button></div>
 <div class="checkout-footer"><button type="button" id="btnBackToCart">‹ Quay lại xem món</button><h3>Thanh toán hóa đơn</h3><div class="payment-layout"><aside class="payment-methods" aria-label="Phương thức thanh toán"><h4>Chọn phương thức thanh toán</h4><button type="button" class="payment-method active" data-payment-method="CASH" aria-pressed="true"><span>💵</span><span>Tiền mặt<small>Nhận tiền và tính tiền thối</small></span></button><button type="button" class="payment-method" data-payment-method="BANK_TRANSFER" aria-pressed="false"><span>🏦</span><span>Chuyển khoản Techcombank<small>Quét mã QR ngân hàng</small></span></button><button type="button" class="payment-method" data-payment-method="E_WALLET" aria-pressed="false"><span>📱</span><span>Ví điện tử<small>Quét mã QR ví điện tử</small></span></button></aside><div class="payment-details">
               <div class="row-calc">
                 <span>Tạm tính tiền món:</span>
@@ -114,10 +115,12 @@
               </div>
 
               <!-- Chiết khấu -->
-              <div class="input-discount-wrap">
-                <input type="number" id="discountPercentInput" placeholder="% Giảm giá (0-100)" min="0" max="100">
+              <div class="input-discount-wrap" data-admin-only>
+                <input type="text" id="discountCodeInput" placeholder="Nhập mã khuyến mãi đã tạo" maxlength="40" autocomplete="off" aria-label="Mã khuyến mãi">
                 <button class="btn-discount" id="btnApplyDiscount">Áp dụng</button>
+                <button type="button" class="btn-action-sm" id="btnClearDiscount">Bỏ mã</button>
               </div>
+              <p id="appliedPromotionLabel" data-admin-only class="promotion-status" role="status"></p>
               <div class="row-calc" style="color: #d97706;">
                 <span>Chiết khấu:</span>
                 <span id="cartDiscount">0 ₫</span>
@@ -160,8 +163,8 @@
 
               <div id="qrPaymentPanel" hidden><h4 id="paymentQrTitle"></h4><img id="paymentQrImage" alt="Mã QR thanh toán" width="256" height="256"><p id="paymentQrRecipient"></p><p>Số tiền cần chuyển: <strong id="qrPaymentTotal"></strong></p><p class="qr-help">Quét mã bằng ứng dụng thanh toán và nhập đúng số tiền trên.</p><label class="payment-received"><input type="checkbox" id="transferReceived"> Đã kiểm tra và nhận đủ tiền</label></div>
 <div class="checkout-btn-group">
-                <button class="btn-cancel-table" id="btnCancelTable">Hủy bàn</button>
-                <button type="button" class="btn-print-temp" id="btnPrintTempReceipt" title="In phiếu tạm tính cho khách xem">🖨️ In Tạm Tính</button>
+                <button class="btn-cancel-table" id="btnCancelTable" data-admin-only>Hủy bàn</button>
+                <button type="button" class="btn-print-temp" id="btnPrintTempReceipt" data-cashier-only title="In phiếu tạm tính cho khách xem">🖨️ In Tạm Tính</button>
                 <button class="btn-pay-now" id="btnPayNow">💰 THANH TOÁN</button>
               </div>
             </div></div></div>
@@ -336,7 +339,7 @@
           <div class="data-card">
             <div class="data-card-header">
               <h3>Danh Sách Khách Hàng Thân Thiết</h3>
-              <div style="display:flex; gap:8px;">
+              <div data-admin-only style="display:flex; gap:8px;">
                 <input type="text" id="addCustomerName" placeholder="Họ và tên..." style="padding:6px 8px; border:1px solid #ccc; border-radius:4px;">
                 <input type="text" id="addCustomerPhone" placeholder="Số điện thoại..." style="padding:6px 8px; border:1px solid #ccc; border-radius:4px;">
                 <input type="email" id="addCustomerEmail" placeholder="Email..." style="padding:6px 8px; border:1px solid #ccc; border-radius:4px;">
@@ -846,24 +849,17 @@
       <div class="login-body">
         <div class="form-field">
           <label>Tên đăng nhập:</label>
-          <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập (admin, cashier, staff)" value="admin" autocomplete="username">
+          <input type="text" id="loginUsername" placeholder="Nhập tên đăng nhập" autocomplete="username">
         </div>
         <div class="form-field">
           <label>Mật khẩu:</label>
-          <input type="password" id="loginPassword" placeholder="Nhập mật khẩu (123456)" value="123456" autocomplete="current-password">
+          <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" autocomplete="current-password">
         </div>
         <button class="btn-primary" id="btnSubmitLogin" style="padding:10px; font-size:0.95rem; margin-top:4px;">
           🚀 Đăng Nhập Hệ Thống
         </button>
 
-        <div class="quick-roles">
-          <div class="quick-roles-title">⚡ Tài khoản có sẵn (Mật khẩu: 123456):</div>
-          <div class="quick-role-btns">
-            <button type="button" class="btn-quick-role" data-user="admin">👑 Admin</button>
-            <button type="button" class="btn-quick-role" data-user="cashier">💼 Thu ngân</button>
-            <button type="button" class="btn-quick-role" data-user="staff">☕ Phục vụ</button>
-          </div>
-        </div>
+
       </div>
     </div>
   </div>
@@ -1135,6 +1131,7 @@
 <p id="productOptionsError" role="alert"></p><footer><button type="button" id="btnCancelProductOptions">Hủy</button><button type="submit" id="btnCompleteProductOptions">Hoàn tất</button></footer>
 </form></dialog>
 <dialog id="dailyShiftReportDialog" class="daily-shift-dialog" aria-labelledby="dailyShiftReportTitle"><header><h2 id="dailyShiftReportTitle">Báo cáo doanh thu trong ngày</h2></header><div id="dailyShiftReportContent"></div><div class="shift-print-prompt"><p>Bạn có muốn in báo cáo chốt ca này không?</p><div><button type="button" id="btnDismissShiftReport">Không in · Đóng</button><button type="button" id="btnPrintShiftReport">Xác nhận in</button></div></div></dialog>
+<dialog id="adminPasswordChangeDialog" class="product-options-dialog" aria-labelledby="adminPasswordChangeTitle"><form id="adminPasswordChangeForm"><h2 id="adminPasswordChangeTitle">Đổi mật khẩu quản trị</h2><p class="password-change-hint">Tài khoản đang dùng mật khẩu mẫu. Hãy đặt mật khẩu riêng trước khi sử dụng quản trị. Đổi xong, bạn sẽ đăng nhập lại.</p><label class="option-field">Mật khẩu hiện tại<input type="password" id="adminOldPassword" autocomplete="current-password" required></label><label class="option-field">Mật khẩu mới<input type="password" id="adminNewPassword" autocomplete="new-password" minlength="12" maxlength="128" required></label><label class="option-field">Nhập lại mật khẩu mới<input type="password" id="adminConfirmPassword" autocomplete="new-password" minlength="12" maxlength="128" required></label><p id="adminPasswordChangeError" role="alert"></p><footer><button type="button" id="btnExitPasswordChange">Đăng xuất</button><button type="submit" id="btnSaveAdminPassword">Lưu mật khẩu mới</button></footer></form></dialog>
   <!-- Toast Container -->
   <div class="toast-box" id="toastContainer"></div>
 

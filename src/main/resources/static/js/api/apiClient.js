@@ -36,6 +36,10 @@ export async function request(endpoint, options = {}) {
     }
 
     if (!res.ok) {
+      if (res.status === 401 && !endpoint.startsWith('/api/auth/')) {
+        document.body.classList.add('auth-required');
+        location.reload();
+      }
       const err = data?.message || data?.error || `Lỗi HTTP ${res.status}: ${res.statusText}`;
       throw new Error(err);
     }

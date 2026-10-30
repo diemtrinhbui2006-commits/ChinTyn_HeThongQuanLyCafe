@@ -2,6 +2,7 @@ import { productApi } from '../api/productApi.js';
 import { categoryApi } from '../api/categoryApi.js';
 import { formatVND } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
+import { getCurrentUser } from './authModule.js';
 
 let cachedProducts = [];
 let cachedCategories = [];
@@ -98,12 +99,30 @@ export function renderProductsTable() {
         <button class="btn-action-sm btn-toggle-avail" data-id="${p.id}" data-status="${!isAvail}">
           ${isAvail ? 'Ngừng bán' : 'Bật bán'}
         </button>
+        ${getCurrentUser().role === 'ADMIN' ? `<button type="button" class="btn-action-sm btn-delete-prod" data-id="${p.id}" style="color:#b91c1c; border-color:#fecaca;">🗑 Xóa</button>` : ''}
       </td>
     `;
     tbody.appendChild(tr);
   });
 
   // Gán sự kiện click nút Sửa
+  tbody.querySelectorAll('.btn-delete-prod').forEach(button => {
+    button.addEventListener('click', async () => {
+      if (getCurrentUser().role !== 'ADMIN' || button.disabled) return;
+      const product = cachedProducts.find(p => p.id === Number(button.dataset.id));
+      if (!product || !confirm(`Xóa món "${product.name}" khỏi thực đơn? Hóa đơn cũ vẫn được giữ lại.`)) return;
+      button.disabled = true;
+      try {
+        await productApi.delete(product.id);
+        showToast('Đã xóa món khỏi thực đơn', 'success');
+        await loadProductsAdmin();
+      } catch (error) {
+        showToast('Không thể xóa món: ' + error.message, 'error');
+        button.disabled = false;
+      }
+    });
+  });
+
   tbody.querySelectorAll('.btn-edit-prod').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = parseInt(btn.dataset.id);

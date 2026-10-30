@@ -40,6 +40,8 @@ public class SecurityConfig {
             HttpSecurity http,
             SecurityContextRepository securityContextRepository,
             ObjectMapper objectMapper,
+            com.example.BuiThiDiemTrinh_TH5.repository.UserRepository users,
+            org.springframework.security.crypto.password.PasswordEncoder passwords,
             @Value("${app.security.cookie-secure:false}") boolean secureCookie
     ) throws Exception {
         CookieCsrfTokenRepository csrfRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
@@ -49,6 +51,7 @@ public class SecurityConfig {
                 .secure(secureCookie));
 
         http
+                .addFilterBefore(new SessionAccountValidationFilter(users, passwords, securityContextRepository), org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfRepository)
@@ -65,16 +68,29 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/api/**")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/csrf", "/api/auth/login").permitAll()
-                        .requestMatchers("/api/guest/qr/*", "/api/guest/qr/*/orders").permitAll()
+                        .requestMatchers("/api/auth/me", "/api/auth/change-password").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/guest/qr/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/guest/qr/*/orders").permitAll()
+                        .requestMatchers("/h2-console/**").denyAll()
+                        .requestMatchers("/users", "/employees", "/products", "/categories", "/dashboard", "/reports", "/inventory", "/promotions", "/suppliers", "/reservations").hasRole("ADMIN")
+                        .requestMatchers("/orders", "/customers", "/shifts").hasAnyRole("ADMIN", "CASHIER")
                         .requestMatchers("/api/users/**", "/api/employees/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/tables/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/tables/**").hasAnyRole("ADMIN", "CASHIER", "STAFF")
                         .requestMatchers("/api/products/**", "/api/categories/**", "/api/tables/**").hasRole("ADMIN")
-                        .requestMatchers("/api/customers/**").hasAnyRole("ADMIN", "CASHIER", "STAFF")
-                        .requestMatchers("/api/invoices/**").hasAnyRole("ADMIN", "CASHIER", "STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/customers", "/api/customers/*").hasAnyRole("ADMIN", "CASHIER")
+                        .requestMatchers("/api/customers/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/invoices").hasAnyRole("ADMIN", "CASHIER")
+                        .requestMatchers("/api/invoices/*/payment-qr", "/api/invoices/*/checkout").hasAnyRole("ADMIN", "CASHIER")
+                        .requestMatchers("/api/invoices/*/discount", "/api/invoices/*/cancel").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/invoices/order").hasAnyRole("ADMIN", "CASHIER", "STAFF")
+                        .requestMatchers(HttpMethod.DELETE, "/api/invoices/*/details/*").hasAnyRole("ADMIN", "CASHIER", "STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/invoices/*", "/api/invoices/table/*").hasAnyRole("ADMIN", "CASHIER", "STAFF")
+                        .requestMatchers("/api/shifts/**").hasAnyRole("ADMIN", "CASHIER")
+                        .requestMatchers(HttpMethod.GET, "/api/pos-connection", "/api/pos-connection/qr").hasAnyRole("ADMIN", "CASHIER", "STAFF")
                         .requestMatchers("/api/qr/**", "/api/inventory/**", "/api/reservations/**",
-                                "/api/shifts/**", "/api/suppliers/**", "/api/expenses/**", "/api/promotions/**", "/api/rewards/**")
-                                .hasAnyRole("ADMIN", "CASHIER", "STAFF")
-                        .requestMatchers("/api/**").authenticated()
+                                "/api/suppliers/**", "/api/expenses/**", "/api/promotions/**", "/api/rewards/**")
+                                .hasRole("ADMIN")
+                        .requestMatchers("/api/**").hasRole("ADMIN")
                         .anyRequest().permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")

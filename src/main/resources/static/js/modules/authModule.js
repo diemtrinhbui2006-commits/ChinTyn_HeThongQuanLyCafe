@@ -1,7 +1,8 @@
 import { showToast } from '../utils/toast.js';
 import { request } from '../api/apiClient.js';
+import { applyRoleVisibility } from '../permissions.js';
 
-const GUEST = { username: '', name: 'Chưa đăng nhập', role: 'GUEST', avatar: '?', employeeId: 1 };
+const GUEST = Object.freeze({ username: '', name: 'Chưa đăng nhập', role: 'GUEST', avatar: '?', employeeId: null });
 let currentUser = null;
 
 /**
@@ -16,6 +17,7 @@ export function getCurrentUser() {
  */
 export function updateSidebarUserUI(user) {
   if (!user) user = GUEST;
+  applyRoleVisibility(user);
   const avatarEl = document.getElementById('sidebarUserAvatar');
   const nameEl = document.getElementById('sidebarUserName');
   const roleEl = document.getElementById('sidebarUserRole');
@@ -57,6 +59,7 @@ export async function handleLogout() {
     updateSidebarUserUI(GUEST);
     showToast('Đã đăng xuất khỏi tài khoản thành công!', 'warning');
     showLoginModal();
+    location.reload();
   } catch (error) {
     showToast('Không thể đăng xuất: ' + error.message, 'error');
   }
@@ -67,6 +70,28 @@ export async function handleLogout() {
  */
 export async function initAuthEvents(onAuthenticated = async () => {}) {
   updateSidebarUserUI(GUEST);
+  const passwordDialog = document.getElementById('adminPasswordChangeDialog');
+  passwordDialog.addEventListener('cancel', event => event.preventDefault());
+  document.getElementById('btnExitPasswordChange').addEventListener('click', handleLogout);
+  document.getElementById('adminPasswordChangeForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = document.getElementById('btnSaveAdminPassword');
+    if (button.disabled) return;
+    const newPassword = document.getElementById('adminNewPassword').value;
+    const message = document.getElementById('adminPasswordChangeError');
+    if (newPassword !== document.getElementById('adminConfirmPassword').value) {
+      message.textContent = 'Mật khẩu xác nhận không khớp.';
+      return;
+    }
+    try {
+      button.disabled = true;
+      await request('/api/auth/change-password', { method: 'POST', body: JSON.stringify({
+        oldPassword: document.getElementById('adminOldPassword').value, newPassword,
+      }) });
+      location.reload();
+    } catch (error) { message.textContent = error.message; }
+    finally { button.disabled = false; }
+  });
 
   // 1. Nút Đăng xuất ở Sidebar & Topbar
   const btnLogout = document.getElementById('btnLogout');
@@ -79,24 +104,13 @@ export async function initAuthEvents(onAuthenticated = async () => {}) {
     btnTopbarLogout.addEventListener('click', handleLogout);
   }
 
-  // 2. Các nút chọn nhanh tài khoản Demo
-  document.querySelectorAll('.btn-quick-role').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const u = btn.dataset.user;
-      const userField = document.getElementById('loginUsername');
-      const passField = document.getElementById('loginPassword');
-      if (userField) userField.value = u;
-      if (passField) passField.value = '123456';
-    });
-  });
-
   // 3. Xác thực phiên đã lưu phía máy chủ hoặc hiện form đăng nhập
   try {
     await request('/api/auth/csrf');
-    currentUser = await request('/api/auth/me');
+    currentUser = Object.freeze(await request('/api/auth/me'));
     updateSidebarUserUI(currentUser);
-    hideLoginModal();
-    await onAuthenticated();
+    if (currentUser.passwordChangeRequired) passwordDialog.showModal();
+    else { hideLoginModal(); await onAuthenticated(); }
   } catch {
     currentUser = null;
     updateSidebarUserUI(GUEST);
@@ -122,8 +136,12 @@ export async function initAuthEvents(onAuthenticated = async () => {}) {
           body: JSON.stringify({ username, password }),
         });
         await request('/api/auth/csrf');
-        currentUser = await request('/api/auth/me');
+        currentUser = Object.freeze(await request('/api/auth/me'));
         updateSidebarUserUI(currentUser);
+        if (currentUser.passwordChangeRequired) {
+          if (!passwordDialog.open) passwordDialog.showModal();
+          return;
+        }
         hideLoginModal();
         showToast(`Xin chào ${currentUser.name}! Đăng nhập thành công (${currentUser.role}).`, 'success');
         await onAuthenticated();

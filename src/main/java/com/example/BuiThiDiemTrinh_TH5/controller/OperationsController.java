@@ -50,13 +50,15 @@ public class OperationsController {
     private final InvoiceService invoiceService;
     private final ObjectMapper objectMapper;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final com.example.BuiThiDiemTrinh_TH5.security.EmployeeAccessPolicy employeeAccess;
 
     public OperationsController(IngredientRepository ingredients, StockMovementRepository movements,
             TableReservationRepository reservations, CafeTableRepository tables, WorkShiftRepository shifts,
             EmployeeRepository employees, InvoiceRepository invoices, ExpenseRepository expenses,
             SupplierRepository suppliers, PromotionRepository promotions, CustomerRepository customers,
             LoyaltyEntryRepository loyalty, LoyaltyRewardRepository rewards, ProductRepository products, QrGuestOrderRepository guestOrders,
-            InvoiceService invoiceService, ObjectMapper objectMapper) {
+            InvoiceService invoiceService, ObjectMapper objectMapper, com.example.BuiThiDiemTrinh_TH5.security.EmployeeAccessPolicy employeeAccess) {
+        this.employeeAccess = employeeAccess;
         this.ingredients = ingredients; this.movements = movements; this.reservations = reservations;
         this.tables = tables; this.shifts = shifts; this.employees = employees; this.invoices = invoices;
         this.expenses = expenses; this.suppliers = suppliers; this.promotions = promotions;
@@ -73,7 +75,7 @@ public class OperationsController {
     @GetMapping("/api/inventory/products/low-stock")
     public List<ProductStockView> lowStockProducts(@RequestParam(defaultValue = "5") int threshold) {
         if (threshold < 0) throw new BadRequestException("Ngưỡng cảnh báo không được âm");
-        return products.findAll().stream().filter(p -> p.getQuantity() != null && p.getQuantity() <= threshold)
+        return products.findByDeletedFalse().stream().filter(p -> p.getQuantity() != null && p.getQuantity() <= threshold)
                 .map(p -> new ProductStockView(p.getId(), p.getName(), p.getQuantity(), threshold)).toList();
     }
 
@@ -154,6 +156,7 @@ public class OperationsController {
     @PostMapping("/api/shifts/open")
     @ResponseStatus(HttpStatus.CREATED)
     public ShiftView openShift(@RequestBody ShiftOpenInput in) {
+        employeeAccess.requireOwnEmployee(in.employeeId());
         if (in.employeeId() == null || in.openingCash() == null || in.openingCash().signum() < 0)
             throw new BadRequestException("Nhân viên và tiền đầu ca hợp lệ là bắt buộc");
         if (shifts.findFirstByEmployeeIdAndClosedAtIsNullOrderByOpenedAtDesc(in.employeeId()).isPresent())
@@ -167,6 +170,7 @@ public class OperationsController {
     @Transactional
     public ShiftView closeShift(@PathVariable Long id, @RequestBody ShiftCloseInput in) {
         WorkShift shift = shifts.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ca #" + id));
+        employeeAccess.requireOwnEmployee(shift.getEmployee().getId());
         if (shift.getClosedAt() != null) throw new BadRequestException("Ca làm việc đã đóng");
         if (in.closingCash() == null || in.closingCash().signum() < 0) throw new BadRequestException("Tiền kiểm kê không hợp lệ");
         LocalDateTime end = LocalDateTime.now();
@@ -178,12 +182,17 @@ public class OperationsController {
     }
 
     @GetMapping("/api/shifts")
-    public List<ShiftView> shifts() { return shifts.findAllByOrderByOpenedAtDesc().stream().map(ShiftView::from).toList(); }
+    public List<ShiftView> shifts() {
+        Long ownId = employeeAccess.isAdmin() ? null : employeeAccess.employeeId();
+        return shifts.findAllByOrderByOpenedAtDesc().stream()
+                .filter(shift -> ownId == null || ownId.equals(shift.getEmployee().getId())).map(ShiftView::from).toList();
+    }
 
     @GetMapping("/api/shifts/{id}/daily-report")
     @Transactional(readOnly = true)
     public DailyShiftReport dailyShiftReport(@PathVariable Long id) {
         WorkShift shift = shifts.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ca #" + id));
+        employeeAccess.requireOwnEmployee(shift.getEmployee().getId());
         if (shift.getClosedAt() == null) throw new BadRequestException("Hãy đóng ca trước khi xem báo cáo chốt ngày");
         LocalDateTime cutoff = shift.getClosedAt();
         List<Invoice> paid = invoices.findByStatusAndPaidAtGreaterThanEqualAndPaidAtLessThanEqual(
@@ -349,7 +358,7 @@ public class OperationsController {
     public GuestMenu guestMenu(@PathVariable String token) {
         QrGuestOrder qr = latestToken(token);
         CafeTable table = qr.getCafeTable();
-        return new GuestMenu(table.getTableNumber(), products.findAll().stream().filter(Product::isAvailable)
+        return new GuestMenu(table.getTableNumber(), products.findByDeletedFalse().stream().filter(Product::isAvailable)
                 .map(p -> new MenuItem(p.getId(), p.getName(), p.getDescription(), p.getPrice())).toList());
     }
 

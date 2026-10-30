@@ -55,4 +55,13 @@ public class Product {
     @EqualsAndHashCode.Exclude
     private Category category;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted = false;
+
+    public Product(Long id, String name, String description, BigDecimal price, Integer quantity,
+                   boolean available, Category category) {
+        this.id = id; this.name = name; this.description = description; this.price = price;
+        this.quantity = quantity; this.available = available; this.category = category;
+    }
+
 }

@@ -22,6 +22,7 @@ public record InvoiceResponse(
         BigDecimal totalAmount,
         InvoiceStatus status,
         PaymentMethod paymentMethod,
-        List<InvoiceDetailResponse> details
+        List<InvoiceDetailResponse> details,
+        String promotionCode
 ) {
 }

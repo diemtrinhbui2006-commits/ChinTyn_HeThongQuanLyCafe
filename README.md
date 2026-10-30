@@ -85,8 +85,8 @@ Mở trình duyệt truy cập ngay: 👉 **`http://localhost:8080/`** (hoặc `
 | Tên đăng nhập | Mật khẩu | Quyền hạn |
 | :--- | :--- | :--- |
 | **admin** | `123456` (mật khẩu dữ liệu mẫu) | **Admin**: Quản trị tài khoản, nhân viên, món, danh mục và bàn; sử dụng POS |
-| **cashier** | `123456` (mật khẩu dữ liệu mẫu) | **Cashier**: Sử dụng POS và quản lý khách hàng |
-| **staff** | `123456` (mật khẩu dữ liệu mẫu) | **Staff**: Sử dụng POS và quản lý khách hàng |
+| **cashier** | `123456` (mật khẩu dữ liệu mẫu) | **Cashier**: Gọi món, xem đơn, thanh toán, xem khách hàng và mở/đóng ca của mình |
+| **staff** | `123456` (mật khẩu dữ liệu mẫu) | **Staff**: Chọn bàn, gọi món và kết nối điện thoại; không được thanh toán hoặc sửa dữ liệu quản trị |
 
 Đăng nhập được xác thực ở backend và phiên được lưu bằng cookie HttpOnly. Các mật khẩu trên chỉ dùng cho dữ liệu mẫu sau khi import `cafe.sql`; hãy đổi chúng trước khi sử dụng dữ liệu thật. Tài khoản mới cần mật khẩu tối thiểu 8 ký tự. Khi triển khai qua HTTPS, đặt biến môi trường `COOKIE_SECURE=true` và cấu hình thông tin MySQL riêng qua `DB_USERNAME`/`DB_PASSWORD`.
 
@@ -114,3 +114,9 @@ theo cấu hình hiện tại.
 - Nhân viên tạo và hiển thị mã QR PNG tại bàn từ trang vận hành. Khách dùng liên kết `/guest-order.html?token=...`
   để xem menu/gửi yêu cầu. Yêu cầu chỉ nằm trong hàng chờ `/api/qr/orders/pending`; nhân viên phải
   duyệt mới thêm món vào hóa đơn đang mở. Token dùng 256 bit ngẫu nhiên; API duyệt yêu cầu cần đăng nhập.
+
+## Phân quyền và mật khẩu quản trị
+
+Admin được quản lý dữ liệu và tài khoản. Thu ngân và phục vụ chỉ được thực hiện nghiệp vụ được cấp; API kiểm tra vai trò độc lập với giao diện. Thu ngân không được thao tác ca của người khác.
+
+Tài khoản Admin dùng mật khẩu mẫu phải tự đặt mật khẩu mới dài 12 đến 128 ký tự trước khi sử dụng quản trị, sau đó đăng nhập lại. QR kết nối không cấp quyền hay tự đăng nhập. Vai trò và phiên được kiểm tra lại ở máy chủ; đổi vai trò có hiệu lực ở yêu cầu tiếp theo, đặt lại mật khẩu thu hồi phiên cũ.

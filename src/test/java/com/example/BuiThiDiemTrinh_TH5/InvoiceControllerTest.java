@@ -41,8 +41,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-@WithMockUser(roles = "CASHIER")
+@WithMockUser(roles = "ADMIN")
 class InvoiceControllerTest {
+    @Autowired private com.example.BuiThiDiemTrinh_TH5.repository.PromotionRepository promotionRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -71,6 +72,7 @@ class InvoiceControllerTest {
 
     @BeforeEach
     void setUp() {
+        PromotionFixtures.seed(promotionRepository);
         Category cat = new Category();
         cat.setName("Do Uong Controller Test " + System.currentTimeMillis());
         cat = categoryRepository.save(cat);

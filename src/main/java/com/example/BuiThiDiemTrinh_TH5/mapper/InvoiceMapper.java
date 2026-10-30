@@ -54,7 +54,8 @@ public class InvoiceMapper {
                 invoice.getTotalAmount(),
                 invoice.getStatus(),
                 invoice.getPaymentMethod(),
-                detailResponses
+                detailResponses,
+                invoice.getPromotionCode()
         );
     }
 }

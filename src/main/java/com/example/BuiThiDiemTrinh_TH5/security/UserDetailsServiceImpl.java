@@ -17,9 +17,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private static final Set<String> ALLOWED_ROLES = Set.of("ADMIN", "CASHIER", "STAFF");
 
     private final UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
-    public UserDetailsServiceImpl(UserRepository userRepository) {
+    public UserDetailsServiceImpl(UserRepository userRepository, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -32,7 +34,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
         return User.withUsername(account.getUsername())
                 .password(account.getPassword())
-                .roles(role)
+                .roles(role.equals("ADMIN") && passwordEncoder.matches("123456", account.getPassword()) ? "PASSWORD_CHANGE_REQUIRED" : role)
                 .build();
     }
 }

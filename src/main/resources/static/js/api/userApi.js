@@ -12,4 +12,5 @@ export const userApi = {
 
   // Lấy danh sách nhân sự
   getAllEmployees: () => request('/api/employees'),
+  createEmployee: (data) => request('/api/employees', { method: 'POST', body: JSON.stringify(data) }),
 };

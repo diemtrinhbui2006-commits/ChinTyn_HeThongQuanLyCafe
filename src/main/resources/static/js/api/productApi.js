@@ -15,6 +15,7 @@ export const productApi = {
 
   // Cập nhật thông tin món
   update: (id, data) => request(`/api/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => request(`/api/products/${id}`, { method: 'DELETE' }),
 
   // Bật/Tắt trạng thái bán (Soft Toggle)
   setAvailability: (id, available) => request(`/api/products/${id}/availability?available=${available}`, { method: 'PATCH' }),

@@ -1,5 +1,6 @@
 import { categoryApi } from '../api/categoryApi.js';
 import { showToast } from '../utils/toast.js';
+import { completeManagementForm, managementFormError } from './managementForms.js';
 
 /**
  * Module Quản Lý Danh Mục Món (Categories)
@@ -37,18 +38,24 @@ export function initCategoryAdminEvents() {
   const input = document.getElementById('addCategoryNameInput');
   if (btn && input) {
     btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
       const name = input.value.trim();
       if (!name) {
         showToast('Vui lòng nhập tên danh mục!', 'warning');
         return;
       }
       try {
+        btn.disabled = true;
         await categoryApi.create({ name });
         input.value = '';
+        completeManagementForm('btnAddCategorySubmit');
         showToast('Đã thêm danh mục mới!', 'success');
         loadCategoriesAdmin();
       } catch (err) {
+        managementFormError('btnAddCategorySubmit', err.message);
         showToast('Lỗi thêm danh mục: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
       }
     });
   }

@@ -27,8 +27,10 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
     private final InvoiceMapper invoiceMapper;
+    private final com.example.BuiThiDiemTrinh_TH5.security.EmployeeAccessPolicy employeeAccess;
 
-    public InvoiceController(InvoiceService invoiceService, InvoiceMapper invoiceMapper) {
+    public InvoiceController(InvoiceService invoiceService, InvoiceMapper invoiceMapper, com.example.BuiThiDiemTrinh_TH5.security.EmployeeAccessPolicy employeeAccess) {
+        this.employeeAccess = employeeAccess;
         this.invoiceService = invoiceService;
         this.invoiceMapper = invoiceMapper;
     }
@@ -41,6 +43,9 @@ public class InvoiceController {
     @PostMapping("/order")
     @ResponseStatus(HttpStatus.CREATED)
     public InvoiceResponse orderFood(@RequestBody OrderFoodRequest request) {
+        if (!employeeAccess.isAdmin()) {
+            request = new OrderFoodRequest(request.tableId(), employeeAccess.employeeId(), request.customerId(), request.productId(), request.quantity(), request.items());
+        }
         Invoice invoice = invoiceService.orderFood(request);
         return invoiceMapper.toResponse(invoice);
     }

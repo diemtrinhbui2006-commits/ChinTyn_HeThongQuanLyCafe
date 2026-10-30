@@ -15,6 +15,9 @@ import { initAuthEvents } from './modules/authModule.js';
 import { showToast } from './utils/toast.js';
 import { loadOperations, initOperationsEvents } from './modules/operationsModule.js';
 import { loadConnections, initConnectionEvents } from './modules/connectionModule.js';
+import { getCurrentUser } from './modules/authModule.js';
+import { canViewPage, canTakePayment } from './permissions.js';
+import { initManagementForms } from './modules/managementForms.js';
 
 // Dedicated modern feature modules
 import { loadReservations, initReservationEvents } from './modules/reservationModule.js';
@@ -27,6 +30,7 @@ const legacyOperationsPages = new Set(['inventory', 'promotions']);
 
 document.addEventListener('DOMContentLoaded', async () => {
   initClock();
+  initManagementForms();
   initNavigation();
   initGlobalRefresh();
 
@@ -80,7 +84,7 @@ const parentSection = page => ['products', 'categories'].includes(page) ? 'menu-
   : ['customers', 'loyalty'].includes(page) ? 'customer-hub'
   : page === 'pos' ? 'pos' : 'operations';
 const pageLoaders = {
-  operations: loadShifts,
+  operations: () => canTakePayment(getCurrentUser()) ? loadShifts() : undefined,
   connections: loadConnections,
   pos: loadPosData, dashboard: loadDashboard, orders: loadOrdersHistory,
   products: loadProductsAdmin, categories: loadCategoriesAdmin, tables: loadTablesAdmin,
@@ -93,6 +97,10 @@ async function refreshPage(page) {
   if (loader) await loader();
 }
 async function navigateTo(target) {
+  if (!canViewPage(getCurrentUser(), target)) {
+    showToast('Bạn không có quyền truy cập chức năng này.', 'warning');
+    return;
+  }
   const view = document.getElementById(target + 'PageView');
   if (!view) return;
   currentPage = target;

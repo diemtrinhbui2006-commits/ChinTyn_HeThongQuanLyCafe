@@ -12,6 +12,7 @@ public interface ProductService {
     Product update(Long id, Product product);
 
     Product setAvailability(Long id, boolean available);
+    void delete(Long id);
 
 
     List<Product> getAllProducts();

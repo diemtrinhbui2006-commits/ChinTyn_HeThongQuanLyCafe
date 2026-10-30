@@ -1,5 +1,6 @@
 import { customerApi } from '../api/customerApi.js';
 import { showToast } from '../utils/toast.js';
+import { completeManagementForm, managementFormError } from './managementForms.js';
 
 /**
  * Module Khách Hàng (Customers)
@@ -43,6 +44,7 @@ export function initCustomerAdminEvents() {
 
   if (btn && nameInput && phoneInput) {
     btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
       const name = nameInput.value.trim();
       const phone = phoneInput.value.trim();
       const email = emailInput ? emailInput.value.trim() : '';
@@ -53,14 +55,19 @@ export function initCustomerAdminEvents() {
       }
 
       try {
+        btn.disabled = true;
         await customerApi.create({ name, phone, email });
         nameInput.value = '';
         phoneInput.value = '';
         if (emailInput) emailInput.value = '';
+        completeManagementForm('btnAddCustomerSubmit');
         showToast('Thêm khách hàng thành công!', 'success');
         loadCustomersAdmin();
       } catch (err) {
+        managementFormError('btnAddCustomerSubmit', err.message);
         showToast('Lỗi thêm khách: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
       }
     });
   }

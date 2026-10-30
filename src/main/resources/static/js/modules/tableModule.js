@@ -1,5 +1,6 @@
 import { tableApi } from '../api/tableApi.js';
 import { showToast } from '../utils/toast.js';
+import { completeManagementForm, managementFormError } from './managementForms.js';
 
 /**
  * Module Quản Lý Bàn Ăn (Tables)
@@ -53,6 +54,7 @@ export function initTableAdminEvents() {
   const input = document.getElementById('addTableNameInput');
   if (addBtn && input) {
     addBtn.addEventListener('click', async () => {
+      if (addBtn.disabled) return;
       const raw = input.value.trim();
       if (!raw) {
         showToast('Vui lòng nhập số bàn (ví dụ: 11 hoặc Bàn 11)!', 'warning');
@@ -65,12 +67,17 @@ export function initTableAdminEvents() {
         return;
       }
       try {
+        addBtn.disabled = true;
         await tableApi.create({ tableNumber, capacity: 4, status: 'AVAILABLE' });
         input.value = '';
+        completeManagementForm('btnAddTableSubmit');
         showToast(`Đã thêm Bàn ${tableNumber} vào CSDL thành công!`, 'success');
         loadTablesAdmin();
       } catch (err) {
+        managementFormError('btnAddTableSubmit', err.message);
         showToast('Lỗi thêm bàn: ' + err.message, 'error');
+      } finally {
+        addBtn.disabled = false;
       }
     });
   }

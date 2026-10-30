@@ -1,0 +1,62 @@
+/* List-first management screens and on-demand input forms. */
+.admin-container { padding: 28px; gap: 24px; background: linear-gradient(180deg, #f7f9fc, #f1f5f9); }
+.admin-container .data-card { border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 3px 14px #0f172a04; flex-shrink: 0; }
+.data-card-header { padding: 20px 22px; min-height: 80px; gap: 16px; flex-wrap: wrap; background: white; }
+.data-card-header h3 { font-size: 17px; line-height: 1.5; letter-spacing: -.2px; }
+.management-header-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.management-launch { min-height: 42px; border-radius: 10px; padding: 10px 16px; }
+.admin-container .btn-primary { background: #b66b00; border-radius: 9px; box-shadow: 0 2px 4px #a1620712; min-height: 38px; }
+.admin-container .btn-primary:hover { background: #965700; }
+.admin-container .btn-action-sm { border-radius: 7px; padding: 7px 11px; }
+.data-table th { background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; }
+.data-table td { font-size: 13px; padding: 16px 18px; line-height: 1.5; }
+.data-table tbody tr:nth-child(even) { background: #fcfdff; }
+.data-table tbody tr:hover { background: #fffaf0; }
+.management-table-scroll, #opIngredients, #opPromotions, #opProductLowStock { overflow-x: auto; }
+.management-table-scroll .data-table { min-width: 620px; }
+#opProductLowStock { border-top: 1px solid #e2e8f0; }
+#opProductLowStock > h4 { padding: 18px; font-size: 14px; color: #475569; }
+.data-card-header > div { flex-wrap: wrap; min-width: 0; }
+.admin-container .kpi-card { border: 1px solid #e2e8f0; border-radius: 14px; }
+.admin-container input, .admin-container select { min-height: 38px; border-radius: 8px !important; border-color: #cbd5e1 !important; }
+.management-qr-layout { display: flex !important; flex-direction: column; }
+.management-qr-layout > * { width: 100%; }
+#open-table-qr { width: auto; align-self: flex-end; padding: 12px 18px; }
+.management-dialog { margin: auto; width: min(620px, calc(100vw - 24px)); padding: 26px; border: 0; border-radius: 20px; max-height: 90dvh; overflow-y: auto; color: #0f172a; box-shadow: 0 24px 80px #0f172a40; }
+.management-dialog::backdrop { background: #0f172a80; backdrop-filter: blur(3px); }
+.management-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.management-dialog header p { font-size: 10px; letter-spacing: 1.8px; color: #a16207; font-weight: 750; margin-bottom: 8px; }
+.management-dialog h2 { font-size: 22px; line-height: 1.4; }
+.management-close { border: 0; border-radius: 50%; background: #f1f5f9; color: #64748b; font-size: 25px; width: 36px; height: 36px; flex-shrink: 0; cursor: pointer; }
+.management-description { font-size: 13px; color: #64748b; line-height: 1.7; margin: 12px 0 24px; }
+.management-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+.management-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.management-field:only-child { grid-column: 1 / -1; }
+.management-field label { font-size: 13px; font-weight: 650; }
+.management-field input, .management-field select, .management-field textarea { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 9px; padding: 10px 12px; font: inherit; font-size: 14px; }
+.management-field :is(input, select, textarea):focus { outline: 3px solid #fef3c7; border-color: #d99520; background: white; }
+.management-dialog footer { border-top: 1px solid #e2e8f0; margin-top: 24px; padding-top: 18px; display: flex; justify-content: flex-end; gap: 10px; }
+.management-dialog footer button { min-height: 42px; padding: 10px 20px; border-radius: 9px; cursor: pointer; }
+.management-save { background: #b66b00; color: white; border: 0; font-weight: 650; }
+.management-error { color: #b91c1c; font-size: 13px; line-height: 1.6; margin-top: 14px; }
+.management-error:empty { display: none; }
+.management-dialog .data-card { box-shadow: none; border: 0; }
+#tableQrManagerDialog > .management-close { float: right; }
+.modal-window { display: flex; flex-direction: column; max-height: 90dvh; border-radius: 18px; }
+.modal-window > .modal-body, .modal-window > form { min-height: 0; overflow-y: auto; }
+.modal-window > form { display: flex; flex-direction: column; }
+.modal-window > form > .modal-body { min-height: 0; overflow-y: auto; }
+.modal-window .modal-head, .modal-window .modal-foot { flex-shrink: 0; }
+.modal-window .form-field input, .modal-window .form-field select, .modal-window .form-field textarea { border-radius: 9px !important; min-height: 42px; }
+@media (max-width: 800px) {
+  .admin-container { padding: 16px; gap: 16px; }
+  .kpi-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .data-card-header { padding: 16px; }
+}
+@media (max-width: 500px) {
+  .management-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .management-dialog { padding: 20px; }
+  .management-header-actions { width: 100%; }
+  .management-launch { flex: 1; }
+  .kpi-cards-grid { grid-template-columns: minmax(0, 1fr); }
+}

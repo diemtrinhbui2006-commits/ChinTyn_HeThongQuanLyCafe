@@ -1,4 +1,14 @@
 body { flex-direction: column; }
+.input-discount-wrap { flex-wrap: wrap; }
+.input-discount-wrap #discountCodeInput { min-width: 0; flex: 1 1 180px; }
+.promotion-status { font-size: 12px; color: #64748b; line-height: 1.5; }
+body.auth-required .app-identity, body.auth-required .app-main, body.auth-required .bottom-navigation { visibility: hidden; pointer-events: none; }
+.nav-item[hidden], .bottom-tab[hidden], [data-admin-only][hidden], [data-cashier-only][hidden], #staffOrderHint[hidden] { display: none !important; }
+#staffOrderHint { font-size: 12px; color: #64748b; line-height: 1.6; }
+#adminPasswordChangeDialog input { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+.password-change-hint { margin-top: 14px; font-size: 13px; line-height: 1.7; color: #64748b; }
+#adminPasswordChangeError { color: #b91c1c; font-size: 13px; margin-bottom: 12px; }
+#btnSaveAdminPassword { background: #b66b00; color: white; }
 .operations-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .quick-shift { padding: 10px 18px; border: 1px solid #86efac; border-radius: 9px; color: #166534; background: #f0fdf4; font-weight: 650; cursor: pointer; white-space: nowrap; }
 .quick-shift.shift-is-open { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
@@ -89,7 +99,7 @@ body { flex-direction: column; }
 .app-identity .brand-info p { font-size: 10px; }
 .app-identity .user-profile-card { padding: 0; border: 0; background: transparent; }
 .app-main { min-height: 0; width: 100%; }
-.bottom-navigation { flex-shrink: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: white; border-top: 1px solid #e2e8f0; padding: 6px max(12px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)); gap: 8px; box-shadow: 0 -4px 20px #0f172a08; z-index: 20; }
+.bottom-navigation { flex-shrink: 0; display: grid; grid-template-columns: repeat(var(--visible-tabs, 4), minmax(0, 1fr)); background: white; border-top: 1px solid #e2e8f0; padding: 6px max(12px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)); gap: 8px; box-shadow: 0 -4px 20px #0f172a08; z-index: 20; }
 .bottom-tab { display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 62px; border: 0; border-radius: 12px; background: transparent; color: #64748b; font-size: 14px; font-weight: 650; cursor: pointer; }
 .bottom-tab > span:first-child { font-size: 24px; }
 .bottom-tab:hover { background: #f8fafc; color: #0f172a; }

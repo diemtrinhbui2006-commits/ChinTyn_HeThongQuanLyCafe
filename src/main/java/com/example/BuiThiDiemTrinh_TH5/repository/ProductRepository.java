@@ -9,4 +9,6 @@ import com.example.BuiThiDiemTrinh_TH5.entity.Product;
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByNameContainingIgnoreCase(String keyword);
+    List<Product> findByDeletedFalse();
+    List<Product> findByNameContainingIgnoreCaseAndDeletedFalse(String keyword);
 }

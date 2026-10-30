@@ -1,5 +1,6 @@
 import { request } from '../api/apiClient.js';
 import { showToast } from '../utils/toast.js';
+import { completeManagementForm, managementFormError } from './managementForms.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -176,8 +177,11 @@ async function approveQr(id) {
 }
 function val(id) { return document.getElementById(id)?.value?.trim() || ''; }
 function bind(id, action) {
-  document.getElementById(id)?.addEventListener('click', async () => {
-    try { await action(); showToast('Đã lưu dữ liệu.', 'success'); await loadOperations(); }
-    catch (error) { showToast(error.message, 'error'); }
+  document.getElementById(id)?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    if (button.disabled) return;
+    try { button.disabled = true; await action(); completeManagementForm(id); showToast('Đã lưu dữ liệu.', 'success'); await loadOperations(); }
+    catch (error) { managementFormError(id, error.message); showToast(error.message, 'error'); }
+    finally { button.disabled = false; }
   });
 }

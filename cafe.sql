@@ -80,6 +80,7 @@ CREATE TABLE `products` (
     `price` DECIMAL(14, 2) NOT NULL,
     `quantity` INT NOT NULL DEFAULT 0,
     `available` BOOLEAN NOT NULL DEFAULT TRUE,
+    `deleted` BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (`id`),
     KEY `idx_products_name` (`name`),
     KEY `idx_products_category` (`category_id`),

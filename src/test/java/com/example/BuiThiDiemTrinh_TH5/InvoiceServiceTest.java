@@ -47,7 +47,82 @@ import com.example.BuiThiDiemTrinh_TH5.service.InvoiceService;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN")
 class InvoiceServiceTest {
+    @Test
+    void unknownAndLegacyCodesWithoutDatabaseRecordsNeverDiscount() {
+        promotionRepository.deleteAll();
+        var invoice = invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, tea.getId(), 1, null));
+        for (String code : new String[] {"ANYTHING", "GIAM10", "GIAM20", "VIP", "WELCOME", "CAFE50K", "20"}) {
+            assertThrows(BadRequestException.class, () -> invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest(code, null, null)));
+            assertEquals(new BigDecimal("0.00"), invoice.getDiscount());
+            assertEquals(new BigDecimal("40000.00"), invoice.getTotalAmount());
+        }
+    }
+
+    @Test
+    void disabledFutureExpiredExhaustedAndMinimumSpendCodesAreRejected() {
+        var invoice = invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, tea.getId(), 1, null));
+        for (int i = 0; i < 5; i++) {
+            var p = PromotionFixtures.save(promotionRepository, "INVALID" + i, "PERCENT", "10");
+            switch (i) {
+                case 0 -> p.setActive(false);
+                case 1 -> p.setStartsAt(java.time.LocalDateTime.now().plusDays(1));
+                case 2 -> p.setEndsAt(java.time.LocalDateTime.now().minusDays(1));
+                case 3 -> { p.setUsageLimit(1); p.setUsageCount(1); }
+                case 4 -> p.setMinimumSpend(new BigDecimal("100000"));
+            }
+            promotionRepository.saveAndFlush(p);
+            String code = p.getCode();
+            assertThrows(BadRequestException.class, () -> invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest(code, null, null)));
+            assertEquals(new BigDecimal("0.00"), invoice.getDiscount());
+        }
+    }
+
+    @Test
+    void checkoutRechecksPromotionAndChangedSubtotalRequiresReapply() {
+        var invoice = invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, tea.getId(), 1, null));
+        invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest(" giam10 ", null, null));
+        invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, tea.getId(), 1, null));
+        assertThrows(BadRequestException.class, () -> invoiceService.checkout(invoice.getId(), null));
+        invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest("GIAM10", null, null));
+        assertEquals(new BigDecimal("8000.00"), invoice.getDiscount());
+        var promotion = promotionRepository.findByCodeIgnoreCase("GIAM10").orElseThrow();
+        promotion.setActive(false); promotionRepository.saveAndFlush(promotion);
+        assertThrows(BadRequestException.class, () -> invoiceService.checkout(invoice.getId(), null));
+        assertEquals(InvoiceStatus.OPEN, invoice.getStatus());
+        assertEquals(0, promotion.getUsageCount());
+    }
+
+    @Test
+    void clearPromotionRestoresFullTotalAndUnknownCodeDoesNotReplaceValidOne() {
+        var invoice = invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, tea.getId(), 1, null));
+        invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest("GIAM10", null, null));
+        assertThrows(BadRequestException.class, () -> invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest("FAKE", null, null)));
+        assertEquals("GIAM10", invoice.getPromotionCode());
+        assertEquals(new BigDecimal("4000.00"), invoice.getDiscount());
+        invoiceService.applyDiscount(invoice.getId(), new ApplyDiscountRequest(null, BigDecimal.ZERO, null));
+        assertEquals(null, invoice.getPromotionCode());
+        assertEquals(new BigDecimal("0.00"), invoice.getDiscount());
+        assertEquals(new BigDecimal("40000.00"), invoice.getTotalAmount());
+    }
+    @Autowired private com.example.BuiThiDiemTrinh_TH5.service.ProductService productService;
+
+    @Test
+    void deletingSoldProductRemovesMenuButKeepsInvoiceHistoryAndBlocksReordering() {
+        var invoice = invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, coffee.getId(), 1, null));
+        invoiceService.checkout(invoice.getId(), new CheckoutRequest(PaymentMethod.CASH, null, null, null));
+        var amount = invoice.getTotalAmount();
+        productService.delete(coffee.getId());
+        productRepository.flush();
+        assertTrue(productRepository.findById(coffee.getId()).orElseThrow().isDeleted());
+        assertTrue(productService.getAllProducts().stream().noneMatch(p -> p.getId().equals(coffee.getId())));
+        assertTrue(productService.searchProductsByName(coffee.getName()).isEmpty());
+        assertEquals(amount, invoiceService.getInvoiceById(invoice.getId()).getTotalAmount());
+        assertEquals(coffee.getName(), invoiceService.getInvoiceById(invoice.getId()).getDetails().get(0).getProduct().getName());
+        assertThrows(BadRequestException.class, () -> invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, coffee.getId(), 1, null)));
+        assertThrows(com.example.BuiThiDiemTrinh_TH5.exception.ResourceNotFoundException.class, () -> productService.setAvailability(coffee.getId(), true));
+    }
     @Autowired
     private com.example.BuiThiDiemTrinh_TH5.repository.WorkShiftRepository workShiftRepository;
 
@@ -151,6 +226,7 @@ class InvoiceServiceTest {
 
     @BeforeEach
     void setUp() {
+        PromotionFixtures.seed(promotionRepository);
         Category cat = new Category();
         cat.setName("Do Uong Test " + System.currentTimeMillis());
         cat.setDescription("Danh muc test");
@@ -361,7 +437,7 @@ class InvoiceServiceTest {
     }
 
     @Test
-    @DisplayName("Nghiệp vụ Chiết khấu: Áp dụng theo số tiền và theo phần trăm")
+    @DisplayName("Không được tự nhập số tiền hoặc phần trăm khi chưa có mã khuyến mãi")
     void testApplyDiscount_AmountAndPercent() {
         // Gọi 1 ly trà đào (40.000)
         Invoice invoice = invoiceService.orderFood(new OrderFoodRequest(
@@ -369,16 +445,14 @@ class InvoiceServiceTest {
         ));
 
         // Giảm trực tiếp 15.000đ
-        Invoice discounted = invoiceService.applyDiscount(invoice.getId(),
-                new ApplyDiscountRequest(null, new BigDecimal("15000"), null));
-        assertEquals(new BigDecimal("15000.00"), discounted.getDiscount());
-        assertEquals(new BigDecimal("25000.00"), discounted.getTotalAmount());
+        assertThrows(BadRequestException.class, () -> invoiceService.applyDiscount(invoice.getId(),
+                new ApplyDiscountRequest(null, new BigDecimal("15000"), null)));
 
         // Giảm theo phần trăm 25% (25% của 40.000 = 10.000)
-        discounted = invoiceService.applyDiscount(invoice.getId(),
-                new ApplyDiscountRequest(null, null, 25.0));
-        assertEquals(new BigDecimal("10000.00"), discounted.getDiscount());
-        assertEquals(new BigDecimal("30000.00"), discounted.getTotalAmount());
+        assertThrows(BadRequestException.class, () -> invoiceService.applyDiscount(invoice.getId(),
+                new ApplyDiscountRequest(null, null, 25.0)));
+        assertEquals(new BigDecimal("0.00"), invoice.getDiscount());
+        assertEquals(new BigDecimal("40000.00"), invoice.getTotalAmount());
     }
 
     @Test

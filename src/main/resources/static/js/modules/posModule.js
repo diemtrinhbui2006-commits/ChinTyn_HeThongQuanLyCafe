@@ -3,6 +3,7 @@ import { productApi } from '../api/productApi.js';
 import { categoryApi } from '../api/categoryApi.js';
 import { invoiceApi } from '../api/invoiceApi.js';
 import { getCurrentUser } from './authModule.js';
+import { canTakePayment } from '../permissions.js';
 import { formatVND } from '../utils/formatters.js';
 import { showToast } from '../utils/toast.js';
 import { getProductImage } from '../utils/imageMatcher.js';
@@ -117,6 +118,7 @@ function bindPosEvents() {
   if (eventsBound) return;
   eventsBound = true;
   document.getElementById('btnConfirmCart').addEventListener('click', () => {
+    if (!canTakePayment(getCurrentUser())) return;
     if (!posState.activeInvoice?.details?.length) return;
     document.querySelector('.pos-container').classList.add('payment-stage');
     selectedPaymentMethod = 'CASH';
@@ -219,6 +221,14 @@ function bindPosEvents() {
   // Áp dụng chiết khấu
   const discountBtn = document.getElementById('btnApplyDiscount');
   if (discountBtn) discountBtn.addEventListener('click', applyDiscount);
+  document.getElementById('btnClearDiscount').addEventListener('click', async () => {
+    if (!posState.activeInvoice) return;
+    try {
+      posState.activeInvoice = await invoiceApi.applyDiscount(posState.activeInvoice.id, { discountAmount: 0 });
+      document.getElementById('discountCodeInput').value = '';
+      renderInvoiceCart();
+    } catch (error) { showToast(error.message, 'error'); }
+  });
 
   // Nút thanh toán
   const payBtn = document.getElementById('btnPayNow');
@@ -564,6 +574,8 @@ async function changeItemQty(item, delta) {
 }
 
 function updateTotalsUI(subtotal, discount, total) {
+  document.getElementById('appliedPromotionLabel').textContent = posState.activeInvoice?.promotionCode
+    ? 'Đang áp dụng mã: ' + posState.activeInvoice.promotionCode : 'Chưa áp dụng mã khuyến mãi';
   if (cashDueTotal !== total && selectedPaymentMethod !== 'CASH') {
     document.getElementById('transferReceived').checked = false;
     document.getElementById('btnPayNow').disabled = true;
@@ -615,7 +627,7 @@ function calculateChange() {
   }
 }
 
-// Áp dụng % giảm giá
+// Chỉ áp dụng mã khuyến mãi đã được quản trị viên tạo.
 async function applyDiscount() {
   const inv = posState.activeInvoice;
   if (!inv) {
@@ -623,18 +635,17 @@ async function applyDiscount() {
     return;
   }
 
-  const percentInput = document.getElementById('discountPercentInput');
-  const percent = parseFloat(percentInput?.value);
-  if (isNaN(percent) || percent < 0 || percent > 100) {
-    showToast('Phần trăm giảm giá phải từ 0% đến 100%!', 'warning');
+  const code = document.getElementById('discountCodeInput').value.trim();
+  if (!code) {
+    showToast('Vui lòng nhập mã khuyến mãi đã tạo.', 'warning');
     return;
   }
 
   try {
-    const updated = await invoiceApi.applyDiscount(inv.id, { discountPercent: percent });
+    const updated = await invoiceApi.applyDiscount(inv.id, { discountCode: code });
     posState.activeInvoice = updated;
     renderInvoiceCart();
-    showToast(`Đã áp dụng giảm giá ${percent}%`, 'success');
+    showToast('Đã áp dụng mã ' + updated.promotionCode, 'success');
   } catch (err) {
     showToast('Lỗi áp dụng giảm giá: ' + err.message, 'error');
   }
@@ -642,6 +653,7 @@ async function applyDiscount() {
 
 // Thanh toán hóa đơn
 async function handleCheckout() {
+  if (!canTakePayment(getCurrentUser())) return;
   if (checkoutPending || !document.querySelector('.pos-container').classList.contains('payment-stage')) return;
   const method = selectedPaymentMethod;
   if (method !== 'CASH' && !document.getElementById('transferReceived').checked) {

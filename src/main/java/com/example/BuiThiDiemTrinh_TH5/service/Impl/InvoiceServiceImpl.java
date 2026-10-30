@@ -185,6 +185,9 @@ public class InvoiceServiceImpl implements InvoiceService {
 
             Product product = productRepository.findById(item.productId())
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy món có id = " + item.productId()));
+            if (product.isDeleted() || !product.isAvailable()) {
+                throw new BadRequestException("Món đã xóa hoặc ngừng bán, không thể gọi thêm");
+            }
 
             // Kiểm tra tồn kho
             if (product.getQuantity() != null && product.getQuantity() < item.quantity()) {
@@ -400,77 +403,44 @@ public class InvoiceServiceImpl implements InvoiceService {
         return invoiceRepository.save(invoice);
     }
 
-    private void applyDiscountInternal(
-            Invoice invoice,
-            String discountCode,
-            BigDecimal discountAmount,
-            Double discountPercent
-    ) {
-        BigDecimal subtotal = invoice.getSubtotal();
-        BigDecimal calculatedDiscount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        invoice.setPromotionCode(null);
-
-        if (discountCode != null && !discountCode.isBlank()) {
-            String code = discountCode.trim().toUpperCase(Locale.ROOT);
-            Promotion promotion = promotionRepository == null ? null : promotionRepository.findByCodeIgnoreCaseForUpdate(code).orElse(null);
-            if (promotion != null) {
-                LocalDateTime now = LocalDateTime.now();
-                if (!promotion.isActive() || (promotion.getStartsAt() != null && now.isBefore(promotion.getStartsAt()))
-                        || (promotion.getEndsAt() != null && now.isAfter(promotion.getEndsAt()))
-                        || (promotion.getUsageLimit() != null
-                        && (promotion.getUsageCount() == null ? 0 : promotion.getUsageCount()) >= promotion.getUsageLimit())) {
-                    throw new BadRequestException("Mã khuyến mãi hiện không khả dụng");
-                }
-                if (promotion.getMinimumSpend() != null && subtotal.compareTo(promotion.getMinimumSpend()) < 0) {
-                    throw new BadRequestException("Hóa đơn chưa đạt giá trị tối thiểu của mã khuyến mãi");
-                }
-                if ("AMOUNT".equalsIgnoreCase(promotion.getDiscountType())) {
-                    calculatedDiscount = promotion.getDiscountValue();
-                } else if ("PERCENT".equalsIgnoreCase(promotion.getDiscountType())
-                        && promotion.getDiscountValue().signum() >= 0
-                        && promotion.getDiscountValue().compareTo(BigDecimal.valueOf(100)) <= 0) {
-                    calculatedDiscount = subtotal.multiply(promotion.getDiscountValue())
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                } else {
-                    throw new BadRequestException("Cấu hình khuyến mãi không hợp lệ");
-                }
-                invoice.setPromotionCode(promotion.getCode());
-            } else switch (code) {
-                case "GIAM10", "WELCOME" ->
-                        calculatedDiscount = subtotal.multiply(BigDecimal.valueOf(0.10)).setScale(2, RoundingMode.HALF_UP);
-                case "GIAM20" ->
-                        calculatedDiscount = subtotal.multiply(BigDecimal.valueOf(0.20)).setScale(2, RoundingMode.HALF_UP);
-                case "VIP" ->
-                        calculatedDiscount = subtotal.multiply(BigDecimal.valueOf(0.15)).setScale(2, RoundingMode.HALF_UP);
-                case "CAFE50K" ->
-                        calculatedDiscount = BigDecimal.valueOf(50000).setScale(2, RoundingMode.HALF_UP);
-                default ->
-                        throw new BadRequestException("Mã giảm giá không hợp lệ: " + discountCode);
-            }
-        } else if (discountPercent != null) {
-            if (discountPercent < 0 || discountPercent > 100) {
-                throw new BadRequestException("Phần trăm giảm giá phải nằm trong khoảng từ 0% đến 100%");
-            }
-
-            calculatedDiscount = subtotal.multiply(BigDecimal.valueOf(discountPercent))
-                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        } else if (discountAmount != null) {
-            if (discountAmount.compareTo(BigDecimal.ZERO) < 0) {
-                throw new BadRequestException("Số tiền giảm giá không được âm");
-            }
-            calculatedDiscount = discountAmount.setScale(2, RoundingMode.HALF_UP);
-        } else {
-            throw new BadRequestException("Vui lòng cung cấp mã giảm giá, phần trăm hoặc số tiền chiết khấu");
+    private void applyDiscountInternal(Invoice invoice, String discountCode, BigDecimal discountAmount, Double discountPercent) {
+        boolean noCode = discountCode == null || discountCode.isBlank();
+        if (noCode && discountAmount != null && discountAmount.signum() == 0 && discountPercent == null) {
+            invoice.setPromotionCode(null);
+            invoice.setDiscount(BigDecimal.ZERO.setScale(2));
+            invoice.setTotalAmount(invoice.getSubtotal());
+            return;
         }
+        if (noCode || discountAmount != null || discountPercent != null)
+            throw new BadRequestException("Vui lòng nhập mã khuyến mãi đã tạo; không được tự nhập số tiền hoặc phần trăm giảm giá");
+        Promotion promotion = validPromotion(invoice, discountCode);
+        BigDecimal discount = promotionDiscount(invoice, promotion);
+        invoice.setPromotionCode(promotion.getCode());
+        invoice.setDiscount(discount);
+        invoice.setTotalAmount(invoice.getSubtotal().subtract(discount).setScale(2, RoundingMode.HALF_UP));
+    }
 
-        // Không cho phép giảm giá vượt quá tổng tiền hàng (subtotal)
-        if (calculatedDiscount.compareTo(subtotal) > 0) {
-            calculatedDiscount = subtotal;
-        }
+    private Promotion validPromotion(Invoice invoice, String code) {
+        Promotion promotion = promotionRepository.findByCodeIgnoreCaseForUpdate(code.trim())
+                .orElseThrow(() -> new BadRequestException("Mã khuyến mãi không tồn tại: " + code.trim()));
+        LocalDateTime now = LocalDateTime.now();
+        if (!promotion.isActive() || (promotion.getStartsAt() != null && now.isBefore(promotion.getStartsAt()))
+                || (promotion.getEndsAt() != null && !now.isBefore(promotion.getEndsAt()))
+                || (promotion.getUsageLimit() != null && (promotion.getUsageCount() == null ? 0 : promotion.getUsageCount()) >= promotion.getUsageLimit()))
+            throw new BadRequestException("Mã khuyến mãi đang tắt, chưa đến hạn, hết hạn hoặc đã hết lượt sử dụng");
+        if (promotion.getMinimumSpend() != null && invoice.getSubtotal().compareTo(promotion.getMinimumSpend()) < 0)
+            throw new BadRequestException("Hóa đơn chưa đạt giá trị tối thiểu của mã khuyến mãi");
+        if (promotion.getDiscountValue() == null || promotion.getDiscountValue().signum() < 0
+                || !("AMOUNT".equalsIgnoreCase(promotion.getDiscountType()) || "PERCENT".equalsIgnoreCase(promotion.getDiscountType()))
+                || ("PERCENT".equalsIgnoreCase(promotion.getDiscountType()) && promotion.getDiscountValue().compareTo(BigDecimal.valueOf(100)) > 0))
+            throw new BadRequestException("Cấu hình mã khuyến mãi không hợp lệ");
+        return promotion;
+    }
 
-        invoice.setDiscount(calculatedDiscount.setScale(2, RoundingMode.HALF_UP));
-        BigDecimal totalAmount = subtotal.subtract(calculatedDiscount).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
-        invoice.setTotalAmount(totalAmount);
+    private BigDecimal promotionDiscount(Invoice invoice, Promotion promotion) {
+        BigDecimal value = "AMOUNT".equalsIgnoreCase(promotion.getDiscountType()) ? promotion.getDiscountValue()
+                : invoice.getSubtotal().multiply(promotion.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        return value.min(invoice.getSubtotal()).setScale(2, RoundingMode.HALF_UP);
     }
 
     private void awardLoyaltyPoints(Invoice invoice) {
@@ -491,17 +461,13 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     private void validatePromotionAtCheckout(Invoice invoice) {
-        if (invoice.getPromotionCode() == null || promotionRepository == null) return;
-        Promotion promotion = promotionRepository.findByCodeIgnoreCaseForUpdate(invoice.getPromotionCode())
-                .orElseThrow(() -> new BadRequestException("Mã khuyến mãi không còn hợp lệ"));
-        LocalDateTime now = LocalDateTime.now();
-        if (!promotion.isActive() || (promotion.getStartsAt() != null && now.isBefore(promotion.getStartsAt()))
-                || (promotion.getEndsAt() != null && now.isAfter(promotion.getEndsAt()))
-                || (promotion.getUsageLimit() != null
-                && (promotion.getUsageCount() == null ? 0 : promotion.getUsageCount()) >= promotion.getUsageLimit())
-                || (promotion.getMinimumSpend() != null && invoice.getSubtotal().compareTo(promotion.getMinimumSpend()) < 0)) {
-            throw new BadRequestException("Mã khuyến mãi hiện không khả dụng cho hóa đơn này");
+        if (invoice.getPromotionCode() == null) {
+            if (invoice.getDiscount().signum() > 0) throw new BadRequestException("Chiết khấu chưa gắn mã hợp lệ. Hãy bỏ giảm giá hoặc áp dụng lại mã đã tạo.");
+            return;
         }
+        Promotion promotion = validPromotion(invoice, invoice.getPromotionCode());
+        if (promotionDiscount(invoice, promotion).compareTo(invoice.getDiscount()) != 0)
+            throw new BadRequestException("Tiền hàng hoặc ưu đãi đã thay đổi. Hãy áp dụng lại mã khuyến mãi trước khi thanh toán.");
     }
 
     private void recalculateInvoiceAmounts(Invoice invoice) {

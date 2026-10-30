@@ -42,6 +42,7 @@ public class ProductServiceImpl implements ProductService {
         validateProduct(product);
         product.setCategory(getCategoryReference(product));
         product.setId(null);
+        product.setDeleted(false);
         return productRepository.save(product);
     }
 
@@ -69,7 +70,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findByDeletedFalse();
     }
 
     @Override
@@ -77,14 +78,24 @@ public class ProductServiceImpl implements ProductService {
         if (keyword == null || keyword.isBlank()) {
             throw new BadRequestException("Từ khóa tìm kiếm không được để trống");
         }
-        return productRepository.findByNameContainingIgnoreCase(keyword.trim());
+        return productRepository.findByNameContainingIgnoreCaseAndDeletedFalse(keyword.trim());
     }
 
 
     @Override
     public Product getProductById(Long id) {
         return productRepository.findById(id)
+                .filter(product -> !product.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm có id = " + id));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Product product = getProductById(id);
+        product.setDeleted(true);
+        product.setAvailable(false);
+        productRepository.save(product);
     }
 
     private void validateProduct(Product product) {

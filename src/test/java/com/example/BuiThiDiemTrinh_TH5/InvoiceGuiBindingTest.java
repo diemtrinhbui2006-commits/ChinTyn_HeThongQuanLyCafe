@@ -37,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ActiveProfiles("test")
 @Transactional
 class InvoiceGuiBindingTest {
+    @Autowired private com.example.BuiThiDiemTrinh_TH5.repository.PromotionRepository promotionRepository;
 
     @Autowired
     private InvoiceGuiBinding invoiceGuiBinding;
@@ -62,6 +63,7 @@ class InvoiceGuiBindingTest {
 
     @BeforeEach
     void setUp() {
+        PromotionFixtures.seed(promotionRepository);
         Category category = new Category();
         category.setName("Đồ uống kiểm thử GUI");
         category = categoryRepository.save(category);
