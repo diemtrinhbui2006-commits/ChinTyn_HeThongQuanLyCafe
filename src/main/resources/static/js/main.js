@@ -14,6 +14,7 @@ import { initReceiptModalEvents } from './modules/receiptModal.js';
 import { initAuthEvents } from './modules/authModule.js';
 import { showToast } from './utils/toast.js';
 import { loadOperations, initOperationsEvents } from './modules/operationsModule.js';
+import { loadConnections, initConnectionEvents } from './modules/connectionModule.js';
 
 // Dedicated modern feature modules
 import { loadReservations, initReservationEvents } from './modules/reservationModule.js';
@@ -36,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Khởi tạo các sự kiện của Modal
   initReceiptModalEvents();
+  initConnectionEvents();
   initOperationsEvents();
   initProductModalEvents();
   initTableAdminEvents();
@@ -64,6 +66,7 @@ function initClock() {
 
 
 const pageTitles = {
+  connections: 'Quản lí kết nối',
   pos: 'Bán hàng (POS)', operations: 'Vận hành & Hệ thống',
   'customer-hub': 'Khách hàng', 'menu-hub': 'Quản trị thực đơn',
   orders: 'Lịch sử đơn hàng', tables: 'Quản lý bàn', products: 'Quản lý món',
@@ -77,6 +80,8 @@ const parentSection = page => ['products', 'categories'].includes(page) ? 'menu-
   : ['customers', 'loyalty'].includes(page) ? 'customer-hub'
   : page === 'pos' ? 'pos' : 'operations';
 const pageLoaders = {
+  operations: loadShifts,
+  connections: loadConnections,
   pos: loadPosData, dashboard: loadDashboard, orders: loadOrdersHistory,
   products: loadProductsAdmin, categories: loadCategoriesAdmin, tables: loadTablesAdmin,
   customers: loadCustomersAdmin, users: loadUsersAdmin,

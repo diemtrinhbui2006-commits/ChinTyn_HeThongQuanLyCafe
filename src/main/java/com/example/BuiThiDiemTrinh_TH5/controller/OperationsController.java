@@ -180,6 +180,30 @@ public class OperationsController {
     @GetMapping("/api/shifts")
     public List<ShiftView> shifts() { return shifts.findAllByOrderByOpenedAtDesc().stream().map(ShiftView::from).toList(); }
 
+    @GetMapping("/api/shifts/{id}/daily-report")
+    @Transactional(readOnly = true)
+    public DailyShiftReport dailyShiftReport(@PathVariable Long id) {
+        WorkShift shift = shifts.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ca #" + id));
+        if (shift.getClosedAt() == null) throw new BadRequestException("Hãy đóng ca trước khi xem báo cáo chốt ngày");
+        LocalDateTime cutoff = shift.getClosedAt();
+        List<Invoice> paid = invoices.findByStatusAndPaidAtGreaterThanEqualAndPaidAtLessThanEqual(
+                InvoiceStatus.PAID, cutoff.toLocalDate().atStartOfDay(), cutoff);
+        BigDecimal gross = paid.stream().map(Invoice::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal discount = paid.stream().map(Invoice::getDiscount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal revenue = paid.stream().map(Invoice::getTotalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        var methods = new java.util.LinkedHashMap<String, BigDecimal>();
+        for (PaymentMethod method : PaymentMethod.values()) methods.put(method.name(), BigDecimal.ZERO);
+        for (Invoice invoice : paid) {
+            String method = invoice.getPaymentMethod() == null ? "OTHER" : invoice.getPaymentMethod().name();
+            methods.merge(method, invoice.getTotalAmount(), BigDecimal::add);
+        }
+        return new DailyShiftReport(cutoff.toLocalDate(), cutoff, ShiftView.from(shift), paid.size(), gross, discount, revenue, methods);
+    }
+
+    public record DailyShiftReport(java.time.LocalDate date, LocalDateTime cutoff, ShiftView shift,
+            int invoiceCount, BigDecimal gross, BigDecimal discount, BigDecimal revenue,
+            Map<String, BigDecimal> byPaymentMethod) { }
+
     @GetMapping("/api/suppliers")
     public List<Supplier> suppliers() { return suppliers.findAll(); }
     @PostMapping("/api/suppliers")

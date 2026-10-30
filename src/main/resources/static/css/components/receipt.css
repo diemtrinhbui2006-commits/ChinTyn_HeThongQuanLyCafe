@@ -30,6 +30,11 @@
 .receipt-items-table td {
   padding: 4px 0;
 }
+.receipt-payment-qr { text-align: center; margin: 14px 0; padding: 10px 0; border-top: 1px dashed #666; break-inside: avoid; }
+.receipt-payment-qr img { display: block; width: 230px; height: 230px; max-width: 100%; object-fit: contain; image-rendering: pixelated; margin: 8px auto; }
+.receipt-payment-qr p { font-size: 12px; margin: 5px 0; }
+.receipt-payment-qr .receipt-paid-note { font-size: 10px; }
+#btnPrintReceiptBtn:disabled { opacity: .45; cursor: wait; }
 
 /* ==================== IN HÓA ĐƠN NHIỆT (PRINT STYLES) ==================== */
 @media print {
@@ -41,11 +46,11 @@
     visibility: visible;
   }
   #thermalReceiptModal {
-    position: fixed;
+    position: absolute;
     left: 0;
     top: 0;
     width: 100vw;
-    height: 100vh;
+    height: auto;
     background: #fff !important;
     display: flex !important;
     align-items: flex-start;
@@ -55,6 +60,8 @@
     z-index: 99999;
   }
   #thermalReceiptModal .modal-window {
+    max-height: none !important;
+    overflow: visible !important;
     box-shadow: none !important;
     border: none !important;
     background: transparent !important;
@@ -68,6 +75,8 @@
     display: none !important;
   }
   #thermalReceiptModal .modal-body {
+    max-height: none !important;
+    overflow: visible !important;
     background: transparent !important;
     padding: 0 !important;
   }
@@ -78,4 +87,5 @@
     padding: 5mm !important;
     margin: 0 !important;
   }
+  .receipt-payment-qr img { width: 52mm; height: 52mm; }
 }

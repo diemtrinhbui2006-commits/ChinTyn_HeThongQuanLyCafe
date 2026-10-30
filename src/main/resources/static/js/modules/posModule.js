@@ -46,9 +46,30 @@ function updatePaymentMethod() {
   document.getElementById('transferReceived').checked = false;
   document.getElementById('btnPayNow').disabled = !cash;
   const bank = method === 'BANK_TRANSFER';
-  document.getElementById('paymentQrImage').src = bank ? '/images/payments/techcombank-qr.png' : '/images/payments/wallet-qr.png';
+  if (!cash) updateInvoicePaymentQr();
   document.getElementById('paymentQrTitle').textContent = bank ? 'Chuyển khoản Techcombank' : 'Thanh toán ví điện tử';
   document.getElementById('paymentQrRecipient').textContent = bank ? 'NGUYEN THI MONG TUYEN · 9703 7273 12' : 'BUI THI DIEM TRINH · ******053';
+}
+
+function updateInvoicePaymentQr() {
+  const invoice = posState.activeInvoice;
+  const image = document.getElementById('paymentQrImage');
+  const received = document.getElementById('transferReceived');
+  const status = document.querySelector('#qrPaymentPanel .qr-help');
+  received.checked = false;
+  received.disabled = true;
+  document.getElementById('btnPayNow').disabled = true;
+  image.hidden = false;
+  status.textContent = 'Đang tạo QR theo số tiền hóa đơn...';
+  image.onload = () => {
+    received.disabled = false;
+    status.textContent = 'Quét mã sẽ có sẵn số tiền và nội dung HD' + invoice.id + '. Kiểm tra thông tin trước khi chuyển.';
+  };
+  image.onerror = () => {
+    image.hidden = true;
+    status.textContent = 'Không tạo được QR cho hóa đơn. Hãy chọn lại phương thức để tải lại.';
+  };
+  image.src = `/api/invoices/${invoice.id}/payment-qr?method=${selectedPaymentMethod}&v=${encodeURIComponent(invoice.totalAmount)}`;
 }
 
 export function showTableSelection() {
@@ -546,6 +567,7 @@ function updateTotalsUI(subtotal, discount, total) {
   if (cashDueTotal !== total && selectedPaymentMethod !== 'CASH') {
     document.getElementById('transferReceived').checked = false;
     document.getElementById('btnPayNow').disabled = true;
+    if (document.querySelector('.pos-container').classList.contains('payment-stage')) updateInvoicePaymentQr();
   }
   document.getElementById('reviewCartTotal').textContent = formatVND(total);
   document.getElementById('qrPaymentTotal').textContent = formatVND(total);

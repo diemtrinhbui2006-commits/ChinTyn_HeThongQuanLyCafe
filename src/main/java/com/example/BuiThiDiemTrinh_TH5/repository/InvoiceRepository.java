@@ -18,6 +18,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     Optional<Invoice> findFirstByCafeTableIdAndStatus(Long tableId, InvoiceStatus status);
 
     List<Invoice> findByStatus(InvoiceStatus status);
+    List<Invoice> findByStatusAndPaidAtGreaterThanEqualAndPaidAtLessThanEqual(
+            InvoiceStatus status, LocalDateTime from, LocalDateTime to);
 
     List<Invoice> findByCafeTableId(Long tableId);
 

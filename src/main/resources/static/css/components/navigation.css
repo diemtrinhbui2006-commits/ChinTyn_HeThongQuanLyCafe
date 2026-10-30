@@ -1,4 +1,61 @@
 body { flex-direction: column; }
+.operations-heading-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.quick-shift { padding: 10px 18px; border: 1px solid #86efac; border-radius: 9px; color: #166534; background: #f0fdf4; font-weight: 650; cursor: pointer; white-space: nowrap; }
+.quick-shift.shift-is-open { color: #b91c1c; background: #fef2f2; border-color: #fecaca; }
+.quick-shift:disabled { opacity: .5; cursor: wait; }
+.daily-shift-dialog { margin: auto; width: min(640px, calc(100vw - 24px)); max-height: 90dvh; overflow: auto; border: 0; border-radius: 16px; padding: 26px; color: #0f172a; }
+.daily-shift-dialog::backdrop { background: #0f172a88; }
+.daily-shift-dialog h2 { font-size: 22px; margin-bottom: 20px; }
+.daily-shift-dialog h3 { font-size: 16px; margin: 20px 0 12px; }
+.daily-shift-dialog p { font-size: 13px; line-height: 1.6; margin: 8px 0; }
+.daily-report-scope { color: #64748b; }
+.daily-shift-dialog table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.daily-shift-dialog td { font-size: 13px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+.daily-shift-dialog td:last-child { text-align: right; font-weight: 650; }
+.daily-shift-dialog .report-total td { font-weight: 800; color: #a16207; }
+.shift-print-prompt { border-top: 1px solid #e2e8f0; padding-top: 14px; }
+.shift-print-prompt > div { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.shift-print-prompt button { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 18px; cursor: pointer; background: #f8fafc; }
+#btnPrintShiftReport { background: #b66b00; color: white; border-color: #b66b00; }
+@media print {
+  body.printing-shift-report { display: block !important; height: auto !important; overflow: visible !important; background: white; }
+  body.printing-shift-report > * { display: none !important; }
+  body.printing-shift-report #thermalReceiptModal { display: none !important; }
+  body.printing-shift-report > #dailyShiftReportDialog { display: block !important; position: static !important; margin: 0 auto; padding: 0; width: 100%; max-width: 180mm; max-height: none; overflow: visible; border: 0; box-shadow: none; }
+  body.printing-shift-report #dailyShiftReportDialog, body.printing-shift-report #dailyShiftReportDialog * { visibility: visible !important; }
+  body.printing-shift-report .shift-print-prompt { display: none !important; }
+  body.printing-shift-report #dailyShiftReportDialog::backdrop { display: none; }
+}
+.connection-layout { display: grid; grid-template-columns: minmax(300px, 480px) minmax(0, 1fr); gap: 30px; align-items: start; }
+.connection-qr-card, .connection-instructions { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; }
+.connection-qr-card { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
+.connection-qr-card h3, #connectionStatus { text-align: center; }
+#connectionStatus { font-size: 13px; color: #64748b; line-height: 1.6; }
+#posConnectionQr { width: min(320px, 100%); height: auto; align-self: center; image-rendering: pixelated; }
+#posConnectionQr[hidden] { display: none; }
+.connection-qr-card label { font-size: 13px; font-weight: 600; }
+.connection-qr-card input, .connection-qr-card select { min-width: 0; width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; }
+.connection-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.connection-actions button { padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; cursor: pointer; }
+#btnCopyPosUrl { background: #fff7e5; border-color: #f59e0b; }
+.connection-instructions ol { padding-left: 22px; margin: 20px 0; }
+.connection-instructions li, .connection-instructions p { font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+.connection-instructions p { color: #64748b; }
+@media (max-width: 800px) { .connection-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+  body { height: 100dvh; }
+  .app-identity .brand-info h2 { font-size: 13px; }
+  .app-topbar { min-height: 54px; height: auto; padding: 8px 12px; gap: 8px; }
+  .topbar-actions { gap: 6px; }
+  #btnRefreshAll { font-size: 0; padding: 8px; }
+  #btnRefreshAll span:first-child { font-size: 16px; }
+  .bottom-tab { min-height: 52px; font-size: 10px; }
+  .bottom-tab > span:first-child { font-size: 20px; }
+  .pos-order-toolbar { padding: 8px 12px; gap: 12px; }
+  .pos-container.ordering:not(.payment-stage) .checkout-panel { min-height: 260px; }
+  .pos-container.ordering:not(.payment-stage) .cart-items-box { max-height: 300px; }
+  .connection-qr-card, .connection-instructions { padding: 18px; }
+}
 .quantity-stepper { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 10px; }
 .quantity-stepper button { min-height: 46px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 9px; font-size: 24px; cursor: pointer; }
 .quantity-stepper #optionQuantity { text-align: center; appearance: textfield; -moz-appearance: textfield; }
@@ -162,3 +219,16 @@ body { flex-direction: column; }
 .payment-received { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; font-size: 14px; }
 .payment-received input { width: 18px; height: 18px; }
 #btnPayNow:disabled { opacity: .45; cursor: default; }
+
+@media (max-width: 600px) {
+  .pos-container.ordering .menu-panel { grid-template-columns: 100px minmax(0, 1fr); }
+  .pos-container.ordering .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: max-content; gap: 10px; padding: 10px; }
+  .pos-container.ordering .product-card { min-height: 175px; }
+  .pos-container.ordering .product-thumb { height: 90px; flex-shrink: 0; }
+  .pos-container.ordering .product-card-body { padding: 8px; }
+  .pos-container.ordering .product-name { font-size: 12px; line-height: 1.4; }
+  .pos-container.ordering .product-price { font-size: 13px; }
+  .pos-container.ordering .categories-bar { padding: 8px; }
+  .pos-container.ordering .cat-chip { padding: 12px 8px; font-size: 11px; }
+  .toast-box { bottom: 84px; right: 12px; left: 12px; max-width: calc(100vw - 24px); }
+}

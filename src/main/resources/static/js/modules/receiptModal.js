@@ -1,4 +1,5 @@
 import { formatVND, formatDate } from '../utils/formatters.js';
+import { showToast } from '../utils/toast.js';
 const escapeText = text => String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
 /**
@@ -32,6 +33,9 @@ export function openThermalReceipt(inv, tableName) {
 
   const invoiceNumber = inv.id ? `#${inv.id}` : '#MỚI';
   const displayTable = tableName || (inv.tableNumber ? `Bàn ${inv.tableNumber}` : (inv.tableId ? `Bàn ${inv.tableId}` : 'Mang về'));
+  const transfer = ['BANK_TRANSFER', 'E_WALLET'].includes(inv.paymentMethod) && Number(fin) > 0;
+  const methodNames = { CASH: 'Tiền mặt', BANK_TRANSFER: 'Chuyển khoản Techcombank', E_WALLET: 'Ví điện tử', CARD: 'Thẻ' };
+  const paymentQr = transfer ? `<div class="receipt-payment-qr"><p><strong>${methodNames[inv.paymentMethod]}</strong></p><img id="receiptPaymentQr" src="/api/invoices/${inv.id}/payment-qr?method=${inv.paymentMethod}&amp;v=${encodeURIComponent(fin)}" alt="QR chuyển khoản hóa đơn ${inv.id}" width="230" height="230"><p>Số tiền: <strong>${formatVND(fin)}</strong></p><p>Nội dung: HD${inv.id}</p><p class="receipt-paid-note">${inv.status === 'PAID' ? 'ĐÃ THANH TOÁN · Không chuyển tiền lần nữa' : 'Quét mã để điền sẵn số tiền hóa đơn'}</p><p id="receiptQrStatus" role="status">Đang tải QR...</p></div>` : `<p>Phương thức: ${methodNames[inv.paymentMethod] || 'Chưa thanh toán'}</p>`;
 
   paper.innerHTML = `
     <h2>☕ CHINTYN COFFEE</h2>
@@ -61,10 +65,25 @@ export function openThermalReceipt(inv, tableName) {
     <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.1rem; margin-top:4px;">
       <span>TỔNG TIỀN:</span><span>${formatVND(fin)}</span>
     </div>
+    ${paymentQr}
     <div class="divider"></div>
     <p style="text-align:center; font-size:0.75rem;">Cảm ơn Quý khách & Hẹn gặp lại!</p>
     <p style="text-align:center; font-size:0.75rem;">WiFi: ChinTynCoffee - Pass: 88888888</p>
   `;
+
+  const qrImage = document.getElementById('receiptPaymentQr');
+  const printButton = document.getElementById('btnPrintReceiptBtn');
+  printButton.disabled = !!qrImage;
+  if (qrImage) {
+    qrImage.onload = () => {
+      document.getElementById('receiptQrStatus').textContent = '';
+      printButton.disabled = false;
+    };
+    qrImage.onerror = () => {
+      document.getElementById('receiptQrStatus').textContent = 'Không tải được QR. Hãy đóng và mở lại hóa đơn trước khi in.';
+    };
+    if (qrImage.complete && qrImage.naturalWidth > 0) qrImage.onload();
+  }
 
   modal.classList.add('show');
 }
@@ -79,8 +98,14 @@ export function initReceiptModalEvents() {
 
   const printBtn = document.getElementById('btnPrintReceiptBtn');
   if (printBtn) {
-    printBtn.addEventListener('click', () => {
-      window.print();
+    printBtn.addEventListener('click', async () => {
+      try {
+        const qr = document.getElementById('receiptPaymentQr');
+        if (qr) await qr.decode();
+        window.print();
+      } catch {
+        showToast('QR chưa tải xong. Vui lòng mở lại hóa đơn trước khi in.', 'error');
+      }
     });
   }
 }

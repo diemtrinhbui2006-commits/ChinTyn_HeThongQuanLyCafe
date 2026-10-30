@@ -48,6 +48,41 @@ import com.example.BuiThiDiemTrinh_TH5.service.InvoiceService;
 @ActiveProfiles("test")
 @Transactional
 class InvoiceServiceTest {
+    @Autowired
+    private com.example.BuiThiDiemTrinh_TH5.repository.WorkShiftRepository workShiftRepository;
+
+    @Test
+    void dailyClosingReportUsesPaidTimeAndExcludesOtherDaysAndUnpaidInvoices() {
+        var day = java.time.LocalDate.of(2026, 10, 30);
+        var shift = new com.example.BuiThiDiemTrinh_TH5.entity.WorkShift();
+        shift.setEmployee(employee);
+        shift.setOpenedAt(day.atTime(8, 0));
+        shift.setClosedAt(day.atTime(18, 0));
+        shift.setOpeningCash(new BigDecimal("100"));
+        shift.setClosingCash(new BigDecimal("200"));
+        shift.setExpectedCash(new BigDecimal("200"));
+        shift = workShiftRepository.save(shift);
+        for (int i = 0; i < 6; i++) {
+            Invoice invoice = new Invoice();
+            invoice.setCafeTable(table); invoice.setEmployee(employee);
+            invoice.setCreatedAt(day.minusDays(1).atTime(9, 0));
+            invoice.setStatus(i == 2 ? InvoiceStatus.OPEN : i == 3 ? InvoiceStatus.CANCELLED : InvoiceStatus.PAID);
+            invoice.setPaymentMethod(i == 1 ? PaymentMethod.BANK_TRANSFER : PaymentMethod.CASH);
+            invoice.setPaidAt(i == 4 ? day.minusDays(1).atTime(12, 0) : i == 5 ? day.atTime(19, 0) : day.atTime(12, 0));
+            invoice.setSubtotal(new BigDecimal(i == 1 ? "50" : "110"));
+            invoice.setDiscount(new BigDecimal(i == 1 ? "0" : "10"));
+            invoice.setTotalAmount(new BigDecimal(i == 1 ? "50" : "100"));
+            invoiceRepository.save(invoice);
+        }
+        var report = operationsController.dailyShiftReport(shift.getId());
+        assertEquals(day, report.date());
+        assertEquals(2, report.invoiceCount());
+        assertEquals(0, new BigDecimal("160").compareTo(report.gross()));
+        assertEquals(0, new BigDecimal("10").compareTo(report.discount()));
+        assertEquals(0, new BigDecimal("150").compareTo(report.revenue()));
+        assertEquals(0, new BigDecimal("100").compareTo(report.byPaymentMethod().get("CASH")));
+        assertEquals(0, new BigDecimal("50").compareTo(report.byPaymentMethod().get("BANK_TRANSFER")));
+    }
 
     @Test
     void customOptionsKeepSeparateLinesAndRemoveCorrectLine() {

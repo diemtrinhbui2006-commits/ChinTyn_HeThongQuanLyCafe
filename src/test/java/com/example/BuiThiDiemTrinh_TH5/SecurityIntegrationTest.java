@@ -28,6 +28,16 @@ import com.example.BuiThiDiemTrinh_TH5.repository.UserRepository;
 @ActiveProfiles("test")
 @Transactional
 class SecurityIntegrationTest {
+    @Test
+    void posConnectionRequiresLogin() throws Exception {
+        mockMvc.perform(get("/api/pos-connection")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "STAFF")
+    void staffCanReadPosConnections() throws Exception {
+        mockMvc.perform(get("/api/pos-connection")).andExpect(status().isOk());
+    }
 
     @Autowired
     private MockMvc mockMvc;

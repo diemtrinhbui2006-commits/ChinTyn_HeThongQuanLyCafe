@@ -7,6 +7,8 @@ let shiftsList = [];
 let currentActiveShift = null;
 
 export async function loadShifts() {
+  const quickButton = document.getElementById('btnQuickShift');
+  if (quickButton) quickButton.disabled = true;
   const tbody = document.getElementById('shiftsTableBody');
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="9" align="center" style="padding:20px; color:#64748b;">⏳ Đang tải dữ liệu ca làm việc...</td></tr>';
@@ -16,17 +18,27 @@ export async function loadShifts() {
     shiftsList = list || [];
 
     // Find active shift
-    currentActiveShift = shiftsList.find(s => !s.closedAt) || null;
+    currentActiveShift = shiftsList.find(s => !s.closedAt && s.employeeId === getCurrentUser().employeeId) || null;
 
     updateShiftKpis();
     renderShiftsTable();
     populateActiveShiftsSelect();
+    if (quickButton) quickButton.disabled = false;
+    return true;
   } catch (err) {
+    if (quickButton) { quickButton.disabled = false; quickButton.textContent = 'Tải lại trạng thái ca'; }
     tbody.innerHTML = `<tr><td colspan="9" align="center" style="color:red; padding:20px;">Lỗi: ${err.message}</td></tr>`;
+    return false;
   }
 }
 
 function updateShiftKpis() {
+  const quick = document.getElementById('btnQuickShift');
+  if (quick) {
+    quick.textContent = currentActiveShift ? '● Đóng ca' : '+ Mở ca';
+    quick.classList.toggle('shift-is-open', !!currentActiveShift);
+    quick.title = currentActiveShift ? 'Đóng ca của bạn và xem báo cáo doanh thu trong ngày' : 'Mở ca làm việc của bạn';
+  }
   const statusEl = document.getElementById('shiftKpiStatus');
   const employeeEl = document.getElementById('shiftKpiEmployee');
   const openingCashEl = document.getElementById('shiftKpiOpeningCash');
@@ -106,10 +118,13 @@ function renderShiftsTable() {
         <td style="font-weight:600;">${s.expectedCash != null ? formatVND(s.expectedCash) : '--'}</td>
         <td style="font-weight:700; color:var(--text-primary);">${s.closingCash != null ? formatVND(s.closingCash) : '--'}</td>
         <td>${diffDisplay}</td>
-        <td><small style="color:#64748b;">${escapeHtml(s.note || '--')}</small></td>
+        <td><small style="color:#64748b;">${escapeHtml(s.note || '--')}</small>${isClosed ? `<button type="button" class="btn-action-sm" data-shift-report="${s.id}">Xem báo cáo</button>` : ''}</td>
       </tr>
     `;
   }).join('');
+  tbody.querySelectorAll('[data-shift-report]').forEach(button => {
+    button.addEventListener('click', () => showDailyShiftReport(button.dataset.shiftReport));
+  });
 }
 
 function openOpenShiftModal() {
@@ -130,6 +145,17 @@ function openCloseShiftModal(shiftId = null) {
 }
 
 export function initShiftEvents() {
+  document.getElementById('btnQuickShift').addEventListener('click', async () => {
+    if (!await loadShifts()) return;
+    if (currentActiveShift) openCloseShiftModal(currentActiveShift.id);
+    else openOpenShiftModal();
+  });
+  document.getElementById('btnDismissShiftReport').addEventListener('click', () => document.getElementById('dailyShiftReportDialog').close());
+  document.getElementById('btnPrintShiftReport').addEventListener('click', () => {
+    document.body.classList.add('printing-shift-report');
+    window.print();
+  });
+  window.addEventListener('afterprint', () => document.body.classList.remove('printing-shift-report'));
   // Modal Mở ca
   const openModal = document.getElementById('openShiftModal');
   const closeOpenModalBtn = document.getElementById('btnCloseOpenShiftModal');
@@ -143,11 +169,15 @@ export function initShiftEvents() {
   if (formOpen) {
     formOpen.onsubmit = async (e) => {
       e.preventDefault();
+      const submit = formOpen.querySelector('[type="submit"]');
+      if (submit.disabled) return;
       const openingCash = Number(document.getElementById('openShiftCashInput')?.value || 0);
       const user = getCurrentUser();
-      const employeeId = user.employeeId || 1;
+      const employeeId = user.employeeId;
+      if (!employeeId) { showToast('Tài khoản chưa được gắn nhân viên để mở ca.', 'warning'); return; }
 
       try {
+        submit.disabled = true;
         await shiftApi.open({ employeeId, openingCash });
         showToast('Đã mở ca làm việc thành công!', 'success');
         hideOpen();
@@ -155,6 +185,8 @@ export function initShiftEvents() {
         await loadShifts();
       } catch (err) {
         showToast(`Không thể mở ca: ${err.message}`, 'error');
+      } finally {
+        submit.disabled = false;
       }
     };
   }
@@ -172,6 +204,8 @@ export function initShiftEvents() {
   if (formClose) {
     formClose.onsubmit = async (e) => {
       e.preventDefault();
+      const submit = formClose.querySelector('[type="submit"]');
+      if (submit.disabled) return;
       const shiftId = document.getElementById('closeShiftModalSelect')?.value;
       const closingCash = Number(document.getElementById('closeShiftCashInput')?.value || 0);
       const note = document.getElementById('closeShiftNoteInput')?.value.trim();
@@ -182,18 +216,41 @@ export function initShiftEvents() {
       }
 
       try {
+        submit.disabled = true;
         await shiftApi.close(shiftId, { closingCash, note });
         showToast('Đã đóng ca và đối soát tiền két thành công!', 'success');
         hideClose();
         formClose.reset();
         await loadShifts();
+        await showDailyShiftReport(shiftId);
       } catch (err) {
         showToast(`Không thể đóng ca: ${err.message}`, 'error');
+      } finally {
+        submit.disabled = false;
       }
     };
   }
 
   document.getElementById('btnRefreshShifts')?.addEventListener('click', loadShifts);
+}
+
+async function showDailyShiftReport(shiftId) {
+  try {
+    const report = await shiftApi.dailyReport(shiftId);
+    const shift = report.shift;
+    const labels = { CASH: 'Tiền mặt', BANK_TRANSFER: 'Chuyển khoản', CARD: 'Thẻ', E_WALLET: 'Ví điện tử', OTHER: 'Khác' };
+    const rows = Object.entries(report.byPaymentMethod).map(([method, amount]) => `<tr><td>${escapeHtml(labels[method] || method)}</td><td>${formatVND(amount)}</td></tr>`).join('');
+    document.getElementById('dailyShiftReportContent').innerHTML = `
+      <p><strong>CHINTYN COFFEE</strong></p><p>Ngày ${escapeHtml(report.date.split('-').reverse().join('/'))} · Chốt lúc ${formatDate(report.cutoff)}</p>
+      <p>Ca #${shift.id} · Nhân viên: ${escapeHtml(shift.employeeName)}</p>
+      <p class="daily-report-scope">Doanh thu toàn quán trong ngày, từ 00:00 đến thời điểm đóng ca. Chỉ tính hóa đơn đã thanh toán.</p>
+      <table><tbody><tr><td>Số hóa đơn đã thanh toán</td><td>${report.invoiceCount}</td></tr><tr><td>Tiền món trước giảm giá</td><td>${formatVND(report.gross)}</td></tr><tr><td>Giảm giá</td><td>${formatVND(report.discount)}</td></tr><tr class="report-total"><td>DOANH THU</td><td>${formatVND(report.revenue)}</td></tr>${rows}</tbody></table>
+      <h3>Đối soát tiền mặt của ca #${shift.id}</h3><table><tbody><tr><td>Tiền đầu ca</td><td>${formatVND(shift.openingCash)}</td></tr><tr><td>Tiền mặt dự kiến trong két</td><td>${formatVND(shift.expectedCash)}</td></tr><tr><td>Tiền kiểm kê khi đóng ca</td><td>${formatVND(shift.closingCash)}</td></tr><tr><td>Chênh lệch</td><td>${formatVND(Number(shift.closingCash) - Number(shift.expectedCash))}</td></tr></tbody></table>
+      <p>Ghi chú: ${escapeHtml(shift.note || 'Không có')}</p>`;
+    document.getElementById('dailyShiftReportDialog').showModal();
+  } catch (error) {
+    showToast('Không tải được báo cáo ca đã đóng. Có thể mở lại ở Ca & đối soát: ' + error.message, 'error');
+  }
 }
 
 function escapeHtml(text) {
