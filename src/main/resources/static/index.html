@@ -105,7 +105,8 @@
               <div class="empty-cart-msg">Chọn một bàn để bắt đầu gọi món!</div>
             </div>
 
-            <div class="checkout-footer">
+            <div class="cart-review-footer"><div><span>Tổng tiền món</span><strong id="reviewCartTotal">0 ₫</strong></div><button type="button" id="btnConfirmCart" disabled>Xác nhận món · Tiếp tục thanh toán →</button></div>
+<div class="checkout-footer"><button type="button" id="btnBackToCart">‹ Quay lại xem món</button><h3>Thanh toán hóa đơn</h3><div class="payment-layout"><aside class="payment-methods" aria-label="Phương thức thanh toán"><h4>Chọn phương thức thanh toán</h4><button type="button" class="payment-method active" data-payment-method="CASH" aria-pressed="true"><span>💵</span><span>Tiền mặt<small>Nhận tiền và tính tiền thối</small></span></button><button type="button" class="payment-method" data-payment-method="BANK_TRANSFER" aria-pressed="false"><span>🏦</span><span>Chuyển khoản Techcombank<small>Quét mã QR ngân hàng</small></span></button><button type="button" class="payment-method" data-payment-method="E_WALLET" aria-pressed="false"><span>📱</span><span>Ví điện tử<small>Quét mã QR ví điện tử</small></span></button></aside><div class="payment-details">
               <div class="row-calc">
                 <span>Tạm tính tiền món:</span>
                 <strong id="cartSubTotal">0 ₫</strong>
@@ -126,7 +127,8 @@
                 <span id="cartFinalTotal" style="color:#d97706;">0 ₫</span>
               </div>
 
-              <div class="cash-change-calc">
+
+<div class="cash-change-calc" id="cashPaymentPanel">
                 <div class="cash-payment-heading">
                   <div>
                     <span class="cash-payment-title">Khách thanh toán</span>
@@ -155,12 +157,13 @@
                 </div>
               </div>
 
-              <div class="checkout-btn-group">
+              <div id="qrPaymentPanel" hidden><h4 id="paymentQrTitle"></h4><img id="paymentQrImage" alt="Mã QR thanh toán" width="256" height="256"><p id="paymentQrRecipient"></p><p>Số tiền cần chuyển: <strong id="qrPaymentTotal"></strong></p><p class="qr-help">Quét mã bằng ứng dụng thanh toán và nhập đúng số tiền trên.</p><label class="payment-received"><input type="checkbox" id="transferReceived"> Đã kiểm tra và nhận đủ tiền</label></div>
+<div class="checkout-btn-group">
                 <button class="btn-cancel-table" id="btnCancelTable">Hủy bàn</button>
                 <button type="button" class="btn-print-temp" id="btnPrintTempReceipt" title="In phiếu tạm tính cho khách xem">🖨️ In Tạm Tính</button>
                 <button class="btn-pay-now" id="btnPayNow">💰 THANH TOÁN</button>
               </div>
-            </div>
+            </div></div></div>
           </div>
 
         </div>
@@ -864,7 +867,7 @@
     </div>
   </div>
 
-  
+
   <!-- ================= MODAL ĐẶT BÀN ================= -->
   <div class="modal-backdrop" id="addReservationModal">
     <div class="modal-window">
@@ -1119,7 +1122,7 @@
 <dialog id="productOptionsDialog" class="product-options-dialog" aria-labelledby="productOptionsTitle">
 <form id="productOptionsForm">
 <header><div><p>TÙY CHỌN MÓN</p><h2 id="productOptionsTitle"></h2></div><button type="button" id="btnCloseProductOptions" aria-label="Đóng">×</button></header>
-<label class="option-field">Số lượng<input id="optionQuantity" type="number" min="1" step="1" value="1" required></label>
+<label class="option-field" for="optionQuantity">Số lượng</label><div class="quantity-stepper"><button type="button" id="btnQuantityMinus" aria-label="Giảm số lượng">−</button><input id="optionQuantity" type="number" min="1" step="1" value="1" required><button type="button" id="btnQuantityPlus" aria-label="Tăng số lượng">+</button></div>
 <fieldset><legend>Mức đường</legend><div class="option-choices">
 <label><input type="radio" name="sugar" value="100" checked><span>Bình thường</span></label>
 <label><input type="radio" name="sugar" value="70"><span>70%</span></label>

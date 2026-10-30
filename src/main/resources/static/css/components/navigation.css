@@ -1,4 +1,9 @@
 body { flex-direction: column; }
+.quantity-stepper { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 10px; }
+.quantity-stepper button { min-height: 46px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 9px; font-size: 24px; cursor: pointer; }
+.quantity-stepper #optionQuantity { text-align: center; appearance: textfield; -moz-appearance: textfield; }
+.quantity-stepper input::-webkit-inner-spin-button, .quantity-stepper input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.quantity-stepper button:hover { background: #fff7e5; border-color: #f59e0b; }
 .product-options-dialog { margin: auto; width: min(520px, calc(100vw - 24px)); max-height: 90vh; overflow-y: auto; padding: 24px; border: 0; border-radius: 18px; box-shadow: 0 24px 80px #0004; color: #0f172a; }
 .product-options-dialog::backdrop { background: #0f172a88; }
 .product-options-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
@@ -103,3 +108,57 @@ body { flex-direction: column; }
   .pos-container.ordering .checkout-panel { overflow: visible; }
   .pos-container:not(.ordering) .tables-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; }
 }
+
+/* Review the ordered dishes before entering a separate payment screen. */
+#posPageView .pos-container.ordering:not(.payment-stage) { grid-template-columns: minmax(0, 1fr) 420px; }
+@media (max-width: 1000px) {
+  #posPageView .pos-container.ordering:not(.payment-stage) { grid-template-columns: minmax(0, 1fr) 330px; }
+}
+@media (max-width: 600px) {
+  #posPageView .pos-container.ordering:not(.payment-stage) { grid-template-columns: minmax(0, 1fr); }
+}
+.pos-container:not(.payment-stage) .checkout-footer { display: none; }
+.cart-review-footer { padding: 18px; border-top: 1px solid #e2e8f0; background: #fffaf0; flex-shrink: 0; }
+.cart-review-footer > div { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 14px; font-size: 14px; }
+#btnConfirmCart { width: 100%; padding: 14px 10px; background: #b66b00; color: white; border: 0; border-radius: 10px; font-weight: 700; cursor: pointer; }
+#btnConfirmCart:disabled { opacity: .45; cursor: default; }
+.pos-container.ordering:not(.payment-stage) .cart-items-box { min-height: 180px; }
+.cart-item { gap: 14px; padding: 16px 0; }
+.cart-item-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.cart-item-qty { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.cart-item-qty .btn-qty { width: 30px; height: 32px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; font-size: 19px; cursor: pointer; }
+.cart-item-price { flex-shrink: 0; font-weight: 650; }
+#posPageView .pos-container.ordering.payment-stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); background: #f1f5f9; overflow: hidden; }
+.pos-container.ordering.payment-stage .menu-panel, .payment-stage .cart-items-box, .payment-stage .cart-review-footer { display: none; }
+.pos-container.ordering.payment-stage .checkout-panel { grid-column: 1; width: min(1180px, 100%); margin: 0 auto; border-right: 1px solid #e2e8f0; overflow-y: auto; }
+.payment-stage .checkout-footer { flex-shrink: 0; padding: 20px 26px; gap: 12px; }
+#btnBackToCart { align-self: flex-start; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; background: white; cursor: pointer; }
+.payment-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.payment-methods { display: flex; flex-direction: column; gap: 14px; padding: 18px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; }
+.payment-methods h4 { font-size: 14px; padding-bottom: 8px; }
+.payment-method { display: flex; align-items: center; gap: 16px; padding: 20px 16px; min-height: 90px; text-align: left; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; color: #334155; font-size: 16px; font-weight: 650; cursor: pointer; }
+.payment-method > span:first-child { font-size: 28px; }
+.payment-method small { display: block; font-size: 12px; font-weight: 400; color: #64748b; margin-top: 7px; }
+.payment-method.active { background: #fff7e5; border-color: #f59e0b; color: #924e00; box-shadow: inset 4px 0 #f59e0b; }
+.payment-method:hover { border-color: #f59e0b; }
+.payment-method:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+.payment-details { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+@media (max-width: 800px) {
+  .payment-stage .checkout-footer { padding: 16px; }
+  .payment-layout { gap: 16px; }
+  .payment-methods { padding: 12px; }
+  .payment-method { padding: 16px 12px; font-size: 14px; gap: 10px; }
+  .payment-method > span:first-child { font-size: 24px; }
+}
+@media (max-width: 600px) {
+  .payment-layout { grid-template-columns: minmax(0, 1fr); }
+}
+#cashPaymentPanel[hidden], #qrPaymentPanel[hidden] { display: none; }
+#qrPaymentPanel { text-align: center; padding: 20px; border-radius: 14px; background: white; border: 1px solid #e2e8f0; }
+#qrPaymentPanel h4 { margin-bottom: 14px; }
+#paymentQrImage { display: block; object-fit: contain; image-rendering: pixelated; width: 256px; max-width: 100%; height: auto; margin: 0 auto 12px; }
+#qrPaymentPanel p { margin: 10px 0; font-size: 14px; }
+#qrPaymentPanel .qr-help { color: #64748b; font-size: 12px; }
+.payment-received { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; font-size: 14px; }
+.payment-received input { width: 18px; height: 18px; }
+#btnPayNow:disabled { opacity: .45; cursor: default; }

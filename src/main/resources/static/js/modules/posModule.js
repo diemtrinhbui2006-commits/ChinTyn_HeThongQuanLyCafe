@@ -25,8 +25,34 @@ export const posState = {
 let cashDueTotal = null;
 let eventsBound = false;
 let pendingProduct = null;
+let checkoutPending = false;
+let selectedPaymentMethod = 'CASH';
+
+function showCartReview() {
+  document.querySelector('.pos-container').classList.remove('payment-stage');
+  document.getElementById('transferReceived').checked = false;
+}
+
+function updatePaymentMethod() {
+  const method = selectedPaymentMethod;
+  document.querySelectorAll('[data-payment-method]').forEach(button => {
+    const active = button.dataset.paymentMethod === method;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  const cash = method === 'CASH';
+  document.getElementById('cashPaymentPanel').hidden = !cash;
+  document.getElementById('qrPaymentPanel').hidden = cash;
+  document.getElementById('transferReceived').checked = false;
+  document.getElementById('btnPayNow').disabled = !cash;
+  const bank = method === 'BANK_TRANSFER';
+  document.getElementById('paymentQrImage').src = bank ? '/images/payments/techcombank-qr.png' : '/images/payments/wallet-qr.png';
+  document.getElementById('paymentQrTitle').textContent = bank ? 'Chuyển khoản Techcombank' : 'Thanh toán ví điện tử';
+  document.getElementById('paymentQrRecipient').textContent = bank ? 'NGUYEN THI MONG TUYEN · 9703 7273 12' : 'BUI THI DIEM TRINH · ******053';
+}
 
 export function showTableSelection() {
+  showCartReview();
   document.querySelector('.pos-container').classList.remove('ordering');
 }
 
@@ -69,6 +95,30 @@ export async function loadPosData() {
 function bindPosEvents() {
   if (eventsBound) return;
   eventsBound = true;
+  document.getElementById('btnConfirmCart').addEventListener('click', () => {
+    if (!posState.activeInvoice?.details?.length) return;
+    document.querySelector('.pos-container').classList.add('payment-stage');
+    selectedPaymentMethod = 'CASH';
+    updatePaymentMethod();
+    document.querySelector('[data-payment-method="CASH"]').focus();
+  });
+  document.getElementById('btnBackToCart').addEventListener('click', showCartReview);
+  document.querySelectorAll('[data-payment-method]').forEach(button => {
+    button.addEventListener('click', () => {
+      if (checkoutPending) return;
+      selectedPaymentMethod = button.dataset.paymentMethod;
+      updatePaymentMethod();
+    });
+  });
+  document.getElementById('transferReceived').addEventListener('change', event => {
+    document.getElementById('btnPayNow').disabled = !event.target.checked;
+  });
+  for (const [id, delta] of [['btnQuantityMinus', -1], ['btnQuantityPlus', 1]]) {
+    document.getElementById(id).addEventListener('click', () => {
+      const input = document.getElementById('optionQuantity');
+      input.value = Math.min(Number(input.max) || 9999, Math.max(1, (Number(input.value) || 1) + delta));
+    });
+  }
   const dialog = document.getElementById('productOptionsDialog');
   ['btnCloseProductOptions', 'btnCancelProductOptions'].forEach(id => document.getElementById(id).addEventListener('click', () => dialog.close()));
   document.getElementById('productOptionsForm').addEventListener('submit', async event => {
@@ -214,6 +264,7 @@ export function renderTables() {
 
 // Chọn bàn
 export async function selectTable(table) {
+  showCartReview();
   if (['RESERVED', 'OUT_OF_SERVICE'].includes(table.status)) {
     showToast('Bàn này đang được đặt trước hoặc ngừng sử dụng.', 'warning');
     return;
@@ -492,6 +543,13 @@ async function changeItemQty(item, delta) {
 }
 
 function updateTotalsUI(subtotal, discount, total) {
+  if (cashDueTotal !== total && selectedPaymentMethod !== 'CASH') {
+    document.getElementById('transferReceived').checked = false;
+    document.getElementById('btnPayNow').disabled = true;
+  }
+  document.getElementById('reviewCartTotal').textContent = formatVND(total);
+  document.getElementById('qrPaymentTotal').textContent = formatVND(total);
+  document.getElementById('btnConfirmCart').disabled = !posState.activeInvoice?.details?.length;
   const subEl = document.getElementById('cartSubTotal');
   const disEl = document.getElementById('cartDiscount');
   const totEl = document.getElementById('cartFinalTotal');
@@ -562,6 +620,16 @@ async function applyDiscount() {
 
 // Thanh toán hóa đơn
 async function handleCheckout() {
+  if (checkoutPending || !document.querySelector('.pos-container').classList.contains('payment-stage')) return;
+  const method = selectedPaymentMethod;
+  if (method !== 'CASH' && !document.getElementById('transferReceived').checked) {
+    showToast('Vui lòng kiểm tra đã nhận đủ tiền trước khi xác nhận.', 'warning');
+    return;
+  }
+  if (method === 'CASH' && Number(document.getElementById('cashRemainingInput').value) > 0) {
+    showToast('Khách chưa thanh toán đủ tiền.', 'warning');
+    return;
+  }
   const inv = posState.activeInvoice;
   if (!inv || !inv.details || inv.details.length === 0) {
     showToast('Bàn chưa gọi món nào để thanh toán!', 'warning');
@@ -573,7 +641,9 @@ async function handleCheckout() {
   if (!confirmed) return;
 
   try {
-    const checkoutResult = await invoiceApi.checkout(inv.id, { paymentMethod: 'CASH' });
+    checkoutPending = true;
+    document.getElementById('btnPayNow').disabled = true;
+    const checkoutResult = await invoiceApi.checkout(inv.id, { paymentMethod: method });
     showToast(`Thanh toán thành công ${tableName}!`, 'success');
 
     // Mở popup in hóa đơn nhiệt 80mm
@@ -593,8 +663,12 @@ async function handleCheckout() {
 
     await loadPosData();
     renderInvoiceCart();
+    showCartReview();
   } catch (err) {
     showToast('Lỗi thanh toán: ' + err.message, 'error');
+  } finally {
+    checkoutPending = false;
+    document.getElementById('btnPayNow').disabled = false;
   }
 }
 
