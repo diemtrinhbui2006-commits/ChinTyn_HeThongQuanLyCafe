@@ -53,6 +53,7 @@ public interface InvoiceService {
      * Hủy / giảm số lượng món trên bàn: hoàn trả tồn kho và tính lại tiền.
      */
     Invoice removeFoodFromInvoice(Long invoiceId, Long productId, Integer quantity);
+    Invoice removeFoodFromInvoice(Long invoiceId, Long productId, Integer quantity, Long detailId);
 
     /**
      * Hủy hóa đơn đang mở: hoàn trả kho hàng và chuyển bàn về "Trống" (AVAILABLE).

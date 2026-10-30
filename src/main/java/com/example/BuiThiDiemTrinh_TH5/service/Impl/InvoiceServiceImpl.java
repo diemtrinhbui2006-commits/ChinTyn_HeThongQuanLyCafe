@@ -158,6 +158,24 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         // Xử lý từng món gọi
         for (OrderItemRequest item : itemsToOrder) {
+            if (item == null) throw new BadRequestException("Món gọi không hợp lệ");
+            int sugar = item.sugarPercent() == null ? 100 : item.sugarPercent();
+            String ice = item.iceOption() == null ? "NORMAL" : item.iceOption();
+            String note = item.note() == null ? "" : item.note().trim();
+            if (!java.util.Set.of(100, 70, 50, 30).contains(sugar)
+                    || !java.util.Set.of("NORMAL", "NONE").contains(ice) || note.length() > 500) {
+                throw new BadRequestException("Tùy chọn đường, đá hoặc ghi chú không hợp lệ (tối đa 500 ký tự)");
+            }
+            String optionKey = "DEFAULT";
+            if (sugar != 100 || !ice.equals("NORMAL") || !note.isEmpty()) {
+                try {
+                    optionKey = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                            .digest((sugar + "|" + ice + "|" + note).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+                } catch (java.security.NoSuchAlgorithmException exception) {
+                    throw new IllegalStateException(exception);
+                }
+            }
+            final String variantKey = optionKey;
             if (item.productId() == null) {
                 throw new BadRequestException("Mã món (productId) không được để trống");
             }
@@ -182,6 +200,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             // Kiểm tra xem món đã có trong chi tiết hóa đơn hay chưa
             Optional<InvoiceDetail> existingDetailOpt = invoice.getDetails().stream()
                     .filter(d -> d.getProduct() != null && d.getProduct().getId().equals(product.getId()))
+                    .filter(d -> variantKey.equals(d.getOptionKey()))
                     .findFirst();
 
             if (existingDetailOpt.isPresent()) {
@@ -200,6 +219,10 @@ public class InvoiceServiceImpl implements InvoiceService {
                         unitPrice,
                         lineTotal
                 );
+                detail.setSugarPercent(sugar);
+                detail.setIceOption(ice);
+                detail.setNote(note);
+                detail.setOptionKey(variantKey);
                 invoice.getDetails().add(detail);
             }
         }
@@ -303,6 +326,12 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     @Transactional
     public Invoice removeFoodFromInvoice(Long invoiceId, Long productId, Integer quantity) {
+        return removeFoodFromInvoice(invoiceId, productId, quantity, null);
+    }
+
+    @Override
+    @Transactional
+    public Invoice removeFoodFromInvoice(Long invoiceId, Long productId, Integer quantity, Long detailId) {
         Invoice invoice = getInvoiceById(invoiceId);
         if (invoice.getStatus() != InvoiceStatus.OPEN) {
             throw new BadRequestException("Chỉ có thể chỉnh sửa món trên hóa đơn đang mở (OPEN)");
@@ -313,6 +342,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         InvoiceDetail detail = invoice.getDetails().stream()
                 .filter(d -> d.getProduct() != null && d.getProduct().getId().equals(productId))
+                .filter(d -> detailId == null || detailId.equals(d.getId()))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Món có id = " + productId + " không có trong hóa đơn #" + invoiceId));
 

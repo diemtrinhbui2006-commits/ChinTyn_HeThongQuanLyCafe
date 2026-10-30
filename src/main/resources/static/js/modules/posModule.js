@@ -23,6 +23,12 @@ export const posState = {
 };
 
 let cashDueTotal = null;
+let eventsBound = false;
+let pendingProduct = null;
+
+export function showTableSelection() {
+  document.querySelector('.pos-container').classList.remove('ordering');
+}
 
 export async function initPosModule() {
   bindPosEvents();
@@ -61,6 +67,32 @@ export async function loadPosData() {
 }
 
 function bindPosEvents() {
+  if (eventsBound) return;
+  eventsBound = true;
+  const dialog = document.getElementById('productOptionsDialog');
+  ['btnCloseProductOptions', 'btnCancelProductOptions'].forEach(id => document.getElementById(id).addEventListener('click', () => dialog.close()));
+  document.getElementById('productOptionsForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!pendingProduct) return;
+    const quantity = Number(document.getElementById('optionQuantity').value);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > pendingProduct.quantity) {
+      document.getElementById('productOptionsError').textContent = 'Số lượng không hợp lệ hoặc vượt tồn kho.';
+      return;
+    }
+    const button = document.getElementById('btnCompleteProductOptions');
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+      const success = await addFood(pendingProduct, {
+        quantity,
+        sugarPercent: Number(document.querySelector('[name="sugar"]:checked').value),
+        iceOption: document.querySelector('[name="ice"]:checked').value,
+        note: document.getElementById('optionNote').value.trim(),
+      });
+      if (success) dialog.close();
+    } finally { button.disabled = false; }
+  });
+  document.getElementById('btnChooseAnotherTable').addEventListener('click', showTableSelection);
   // Tìm kiếm món ăn
   const searchInput = document.getElementById('productSearchInput');
   if (searchInput) {
@@ -162,7 +194,8 @@ export function renderTables() {
     const isSelected = posState.selectedTable && posState.selectedTable.id === table.id;
     const tableName = table.displayName || table.name || ('Bàn ' + (table.tableNumber ?? table.id));
 
-    const box = document.createElement('div');
+    const box = document.createElement('button');
+    box.type = 'button';
     box.className = `table-box ${isOccupied ? 'occupied' : 'available'} ${isSelected ? 'selected' : ''}`;
     box.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:start;">
@@ -181,12 +214,18 @@ export function renderTables() {
 
 // Chọn bàn
 export async function selectTable(table) {
+  if (['RESERVED', 'OUT_OF_SERVICE'].includes(table.status)) {
+    showToast('Bàn này đang được đặt trước hoặc ngừng sử dụng.', 'warning');
+    return;
+  }
   posState.selectedTable = table;
   const cashInput = document.getElementById('cashRemainingInput');
   if (cashInput) cashInput.value = '';
   renderTables();
 
   const tableName = table.displayName || table.name || ('Bàn ' + (table.tableNumber ?? table.id));
+  document.getElementById('posSelectedTableName').textContent = tableName;
+  document.querySelector('.pos-container').classList.add('ordering');
   const titleEl = document.getElementById('posActiveTableTitle');
   if (titleEl) {
     titleEl.textContent = `${tableName} (${table.status === 'OCCUPIED' ? 'Đang phục vụ' : 'Bàn trống'})`;
@@ -213,10 +252,11 @@ export async function selectTable(table) {
 function renderCategories() {
   const container = document.getElementById('categoriesBar');
   if (!container) return;
-  container.innerHTML = '<span class="cat-chip active" data-id="ALL">Tất cả</span>';
+  container.innerHTML = '<button type="button" class="cat-chip" data-id="ALL">Tất cả món</button>';
 
   posState.categories.forEach(cat => {
-    const chip = document.createElement('span');
+    const chip = document.createElement('button');
+    chip.type = 'button';
     chip.className = 'cat-chip';
     chip.dataset.id = cat.id;
     chip.textContent = cat.name;
@@ -231,6 +271,11 @@ function renderCategories() {
   });
 
   const allChip = container.querySelector('[data-id="ALL"]');
+  container.querySelectorAll('.cat-chip').forEach(chip => {
+    const active = String(chip.dataset.id) === String(posState.categoryFilter);
+    chip.classList.toggle('active', active);
+    chip.setAttribute('aria-pressed', String(active));
+  });
   if (allChip) {
     allChip.addEventListener('click', (e) => {
       document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
@@ -244,6 +289,11 @@ function renderCategories() {
 
 // 3. Render Thực đơn món ăn (Có Phân Trang)
 export function renderProducts() {
+  document.querySelectorAll('#categoriesBar .cat-chip').forEach(chip => {
+    const active = String(chip.dataset.id) === String(posState.categoryFilter);
+    chip.classList.toggle('active', active);
+    chip.setAttribute('aria-pressed', String(active));
+  });
   const grid = document.getElementById('productsGrid');
   const pagEl = document.getElementById('posProductsPagination');
   if (!grid) return;
@@ -288,7 +338,7 @@ export function renderProducts() {
     `;
 
     if (isAvail) {
-      card.addEventListener('click', () => addFood(p));
+      card.addEventListener('click', () => openProductOptions(p));
     }
     grid.appendChild(card);
   });
@@ -322,7 +372,15 @@ export function renderProducts() {
 }
 
 // 4. Thêm món vào bàn (Gọi món)
-async function addFood(product) {
+function openProductOptions(product) {
+  pendingProduct = product;
+  document.getElementById('productOptionsForm').reset();
+  document.getElementById('productOptionsTitle').textContent = product.name;
+  document.getElementById('optionQuantity').max = product.quantity ?? 9999;
+  document.getElementById('productOptionsError').textContent = '';
+  document.getElementById('productOptionsDialog').showModal();
+}
+async function addFood(product, options) {
   if (!posState.selectedTable) {
     showToast('Vui lòng chọn một bàn trước khi gọi món!', 'warning');
     return;
@@ -335,8 +393,7 @@ async function addFood(product) {
     const payload = {
       tableId: posState.selectedTable.id,
       employeeId: employeeId,
-      productId: product.id,
-      quantity: 1,
+      items: [{ productId: product.id, ...options }],
     };
 
     const updated = await invoiceApi.orderFood(payload);
@@ -354,8 +411,10 @@ async function addFood(product) {
 
     renderInvoiceCart();
     await loadPosData();
+    return true;
   } catch (err) {
-    showToast('Lỗi khi thêm món: ' + err.message, 'error');
+    document.getElementById('productOptionsError').textContent = err.message;
+    return false;
   }
 }
 
@@ -385,8 +444,14 @@ export function renderInvoiceCart() {
       <div class="cart-item-price">${formatVND(item.lineTotal || (item.unitPrice * item.quantity))}</div>
     `;
 
-    div.querySelector('[data-action="dec"]').addEventListener('click', () => changeItemQty(item.productId, -1));
-    div.querySelector('[data-action="inc"]').addEventListener('click', () => changeItemQty(item.productId, 1));
+    div.querySelector('[data-action="dec"]').addEventListener('click', () => changeItemQty(item, -1));
+    div.querySelector('[data-action="inc"]').addEventListener('click', () => changeItemQty(item, 1));
+    const optionsText = document.createElement('small');
+    optionsText.className = 'cart-item-options';
+    optionsText.textContent = (item.sugarPercent ?? 100) + '% đường · '
+      + (item.iceOption === 'NONE' ? 'Không đá' : 'Đá bình thường')
+      + (item.note ? ' · ' + item.note : '');
+    div.querySelector('.cart-item-name').appendChild(optionsText);
     container.appendChild(div);
   });
 
@@ -394,7 +459,7 @@ export function renderInvoiceCart() {
 }
 
 // Cập nhật số lượng món
-async function changeItemQty(productId, delta) {
+async function changeItemQty(item, delta) {
   const inv = posState.activeInvoice;
   if (!inv || !posState.selectedTable) return;
 
@@ -407,11 +472,10 @@ async function changeItemQty(productId, delta) {
       updated = await invoiceApi.orderFood({
         tableId: posState.selectedTable.id,
         employeeId: employeeId,
-        productId: productId,
-        quantity: 1,
+        items: [{ productId: item.productId, quantity: 1, sugarPercent: item.sugarPercent, iceOption: item.iceOption, note: item.note }],
       });
     } else {
-      updated = await invoiceApi.removeFood(inv.id, productId, 1);
+      updated = await invoiceApi.removeFood(inv.id, item.productId, 1, item.id);
     }
 
     if (updated) {

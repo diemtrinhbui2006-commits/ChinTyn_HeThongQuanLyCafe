@@ -22,8 +22,8 @@ import lombok.ToString;
 @Table(
         name = "invoice_details",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_invoice_detail_invoice_product",
-                columnNames = {"invoice_id", "product_id"}
+                name = "uk_invoice_detail_variant",
+                columnNames = {"invoice_id", "product_id", "option_key"}
         )
 )
 @Data
@@ -55,4 +55,26 @@ public class InvoiceDetail {
 
     @Column(name = "line_total", nullable = false, precision = 14, scale = 2)
     private BigDecimal lineTotal;
+
+    @Column(name = "sugar_percent")
+    private Integer sugarPercent = 100;
+
+    @Column(name = "ice_option", length = 10)
+    private String iceOption = "NORMAL";
+
+    @Column(length = 500)
+    private String note = "";
+
+    @Column(name = "option_key", length = 64, nullable = false, columnDefinition = "varchar(64) default 'DEFAULT'")
+    private String optionKey = "DEFAULT";
+
+    public InvoiceDetail(Long id, Invoice invoice, Product product, Integer quantity,
+                         BigDecimal unitPrice, BigDecimal lineTotal) {
+        this.id = id;
+        this.invoice = invoice;
+        this.product = product;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.lineTotal = lineTotal;
+    }
 }

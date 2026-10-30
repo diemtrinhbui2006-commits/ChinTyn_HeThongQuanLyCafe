@@ -49,6 +49,33 @@ import com.example.BuiThiDiemTrinh_TH5.service.InvoiceService;
 @Transactional
 class InvoiceServiceTest {
 
+    @Test
+    void customOptionsKeepSeparateLinesAndRemoveCorrectLine() {
+        var first = new OrderItemRequest(coffee.getId(), 2, 50, "NONE", "Để riêng sữa");
+        Invoice invoice = invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, null, null, List.of(first)));
+        invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, null, null,
+                List.of(new OrderItemRequest(coffee.getId(), 1, 70, "NORMAL", ""))));
+        invoiceService.orderFood(new OrderFoodRequest(table.getId(), employee.getId(), null, null, null, List.of(first)));
+        invoiceRepository.flush();
+        assertEquals(2, invoice.getDetails().size());
+        var custom = invoice.getDetails().stream().filter(d -> "NONE".equals(d.getIceOption())).findFirst().orElseThrow();
+        assertEquals(4, custom.getQuantity());
+        assertEquals(50, custom.getSugarPercent());
+        assertEquals("Để riêng sữa", custom.getNote());
+        invoiceService.removeFoodFromInvoice(invoice.getId(), coffee.getId(), 1, custom.getId());
+        assertEquals(3, custom.getQuantity());
+        assertEquals(1, invoice.getDetails().stream().filter(d -> "NORMAL".equals(d.getIceOption())).findFirst().orElseThrow().getQuantity());
+    }
+
+    @Test
+    void invalidSugarIsRejectedBeforeDeductingStock() {
+        int stock = coffee.getQuantity();
+        assertThrows(BadRequestException.class, () -> invoiceService.orderFood(new OrderFoodRequest(
+                table.getId(), employee.getId(), null, null, null,
+                List.of(new OrderItemRequest(coffee.getId(), 1, 90, "NONE", "")))));
+        assertEquals(stock, productRepository.findById(coffee.getId()).orElseThrow().getQuantity());
+    }
+
     @Autowired
     private InvoiceService invoiceService;
 
