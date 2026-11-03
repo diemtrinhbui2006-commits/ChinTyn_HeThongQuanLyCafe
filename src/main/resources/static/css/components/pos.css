@@ -90,11 +90,14 @@
   box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
 }
 
-.table-box.available { border-color: #86efac; }
-.table-box.available .table-badge { background: var(--success-bg); color: var(--success); }
+.table-box.available { border: 2px solid #22c55e; background: #f0fdf4; }
+.table-box.available .table-badge { background: #dcfce7; color: #16a34a; }
 
-.table-box.occupied { border-color: #fdba74; }
-.table-box.occupied .table-badge { background: #fff7ed; color: #ea580c; }
+.table-box.occupied { border: 2px solid #f97316; background: #fff7ed; }
+.table-box.occupied .table-badge { background: #ffedd5; color: #ea580c; }
+
+.table-box.reserved { border: 2px dashed #ca8a04 !important; background: #fefce8 !important; }
+.table-box.reserved .table-badge { background: #fef08a; color: #854d0e; border: 1px dashed #ca8a04; }
 
 .table-title {
   font-weight: 700;

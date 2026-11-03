@@ -21,11 +21,21 @@ export async function loadTablesAdmin() {
 
     list.forEach(t => {
       const isOccupied = t.status === 'OCCUPIED';
+      const isReserved = t.status === 'RESERVED';
+      let badgeClass = 'active';
+      let statusText = 'Trống';
+      if (isOccupied) {
+        badgeClass = 'occupied';
+        statusText = 'Đang dùng';
+      } else if (isReserved) {
+        badgeClass = 'reserved';
+        statusText = 'Đã đặt trước';
+      }
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>#${t.id}</strong></td>
         <td><strong>Bàn ${t.tableNumber || t.id}</strong> <span style="color:#64748b; font-size:0.8rem;">(${t.capacity || 4} chỗ)</span></td>
-        <td><span class="badge-tag ${isOccupied ? 'occupied' : 'active'}">${isOccupied ? 'Đang dùng' : 'Trống'}</span></td>
+        <td><span class="badge-tag ${badgeClass}">${statusText}</span></td>
         <td><button class="btn-action-sm danger btn-delete-table" data-id="${t.id}">Xóa</button></td>
       `;
       tbody.appendChild(tr);
