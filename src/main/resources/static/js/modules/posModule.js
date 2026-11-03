@@ -262,6 +262,7 @@ export function renderTables() {
   const filtered = posState.tables.filter(t => {
     if (posState.tableFilter === 'AVAILABLE') return t.status === 'AVAILABLE';
     if (posState.tableFilter === 'OCCUPIED') return t.status === 'OCCUPIED';
+    if (posState.tableFilter === 'RESERVED') return t.status === 'RESERVED';
     return true;
   });
 
@@ -272,16 +273,27 @@ export function renderTables() {
 
   filtered.forEach(table => {
     const isOccupied = table.status === 'OCCUPIED';
+    const isReserved = table.status === 'RESERVED';
     const isSelected = posState.selectedTable && posState.selectedTable.id === table.id;
     const tableName = table.displayName || table.name || ('Bàn ' + (table.tableNumber ?? table.id));
 
+    let statusClass = 'available';
+    let statusText = 'Trống';
+    if (isOccupied) {
+      statusClass = 'occupied';
+      statusText = 'Có khách';
+    } else if (isReserved) {
+      statusClass = 'reserved';
+      statusText = 'Đã đặt';
+    }
+
     const box = document.createElement('button');
     box.type = 'button';
-    box.className = `table-box ${isOccupied ? 'occupied' : 'available'} ${isSelected ? 'selected' : ''}`;
+    box.className = `table-box ${statusClass} ${isSelected ? 'selected' : ''}`;
     box.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:start;">
         <span class="table-title">${tableName}</span>
-        <span class="table-badge">${isOccupied ? 'Có khách' : 'Trống'}</span>
+        <span class="table-badge">${statusText}</span>
       </div>
       <div class="table-seats">
         <span>👥 ${table.capacity ?? table.seats ?? 4} chỗ</span>
