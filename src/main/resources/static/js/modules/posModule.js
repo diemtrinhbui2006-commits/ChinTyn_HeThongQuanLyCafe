@@ -54,6 +54,7 @@ function updatePaymentMethod() {
 
 function updateInvoicePaymentQr() {
   const invoice = posState.activeInvoice;
+  if (!invoice || !invoice.id) return;
   const image = document.getElementById('paymentQrImage');
   const received = document.getElementById('transferReceived');
   const status = document.querySelector('#qrPaymentPanel .qr-help');
@@ -707,9 +708,9 @@ async function handleCheckout() {
       }
     }
 
+    showCartReview();
     await loadPosData();
     renderInvoiceCart();
-    showCartReview();
   } catch (err) {
     showToast('Lỗi thanh toán: ' + err.message, 'error');
   } finally {
